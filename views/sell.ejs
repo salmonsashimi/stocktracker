@@ -1,0 +1,32 @@
+<%- include('partials/header', {page: page}) %>
+
+
+    <div class="container mt-5 w-25 login text-center">
+        <h1 class='mt-5'>Sell Stock</h1>
+        <form action='/sell' method='POST' class='mt-5'>
+            <div class="form-group">
+                <select class="form-control" name='ticker'>
+                    <option disabled default>Select Stock</option>
+                    <% for (let stock of stocks) { %>
+                        <option>
+                            <%- stock.ticker %>
+                        </option>
+                        <% } %>
+                </select>
+
+            </div>
+            <div class="mt-2">
+                <input type="number" class="form-control" placeholder="Quantity" name='quantity' min=0>
+            </div>
+            <div class="input-group mt-2">
+                <div class="input-group-prepend">
+                    <div class="input-group-text">$</div>
+                </div>
+                <input type="number" class="form-control" placeholder="Sell Price" name='price' min=0 step=0.01>
+            </div>
+            <button type="submit" class="btn btn-primary mt-2">Submit</button>
+        </form>
+    </div>
+    </body>
+
+    </html>
