@@ -4,6 +4,7 @@
 // -	Can just google gitignore template from github and copy paste
 // -	Atom will show files greyed out ---- shows that the files will not be committed. 
 
+
 // **when deploying app on server, look for config vars and see how to set them up. 
 
 require('dotenv').config();
@@ -20,7 +21,6 @@ const Stock = require(__dirname + '/models/Stock')
 const AppError = require(__dirname + '/models/AppError');
 
 
-const STOCK_URL = 'http://api.marketstack.com/v1/eod/latest';
 const API_KEY = process.env.API_KEY;
 
 app.set('views', path.join(__dirname + '/views'));
@@ -46,7 +46,7 @@ mongoose.connect('mongodb://localhost:27017/stocktracker', {
 //middleware 
 const requireLogin = (req, res, next) => {
     if (!req.session.user_id) {
-        return res.redirect('/login')
+        return res.redirect('/')
     }
     next();
 }
@@ -58,20 +58,70 @@ function catchAsync(fn) {
 }
 
 async function obtainMarketInfo(ticker) {
-    let params = { params: { access_key: API_KEY, symbols: ticker } }
+    const URL = 'http://api.marketstack.com/v1/eod/latest';
+    const params = { params: { access_key: API_KEY, symbols: ticker } }
     try {
-        const response = await axios.get(STOCK_URL, params)
+        const response = await axios.get(URL, params)
         return response;
     } catch (error) {
-        return error.response;
+        throw new AppError(error.response.statusText, error.response.status);
     }
 }
 
-//routings
-//***** REGISTRATION PAGE *****
-app.get('/register', (req, res) => {
-    res.render('register', { page: 'Register' })
+async function obtainCompanyName(ticker) {
+    const URL = 'http://api.marketstack.com/v1/tickers/' + ticker;
+    const params = { params: { access_key: API_KEY } }
+    try {
+        const response = await axios.get(URL, params)
+        return response;
+    } catch (error) {
+        throw new AppError(error.response.statusText, error.response.status);
+    }
+}
+
+async function obtainCompanyInfo(ticker) {
+    let marketInfo = await obtainMarketInfo(ticker);
+    let companyName = await obtainCompanyName(ticker);
+    console.log(marketInfo.data)
+    console.log(companyName.data)
+    let { name, symbol, stock_exchange } = companyName.data;
+    let { close } = marketInfo.data.data[0];
+    let companyInfo = {
+        name: name,
+        symbol: symbol,
+        stock_exchange: stock_exchange.acronym,
+        close: close
+    }
+    console.log(companyInfo)
+    return companyInfo;
+}
+
+
+
+
+//****************************************
+//*           LOGIN/REGISTER PAGE        *
+//****************************************
+app.get('/', (req, res) => {
+    res.render('login', { page: 'Login' })
 })
+
+app.post('/login', catchAsync(async (req, res, next) => {
+    let userLogin = req.body;
+    const storedUserInfo = await User.find({ email: userLogin.email });
+    if (!storedUserInfo.length) {
+        throw new AppError('User does not exist');
+    } else {
+        const validPassword = await bcrypt.compare(userLogin.password, storedUserInfo[0].password)
+        if (validPassword) {
+            req.session.user_id = storedUserInfo[0]._id;
+            req.session.name = storedUserInfo[0].name;
+            res.redirect('/home')
+        } else {
+            throw new AppError('Wrong password', 404);
+        }
+    }
+}))
 
 app.post('/register', catchAsync(async (req, res) => {
     let { name, email, password, password2 } = req.body;
@@ -86,47 +136,40 @@ app.post('/register', catchAsync(async (req, res) => {
         password: hashedPassword
     })
     await newUser.save()
-    res.redirect('/login')
+    console.log(newUser._id);
+    req.session.user_id = newUser._id
+    req.session.name = newUser.name;
+    res.redirect('/home')
 }))
 
 
-//***** LOGIN PAGE *****
-app.get('/login', (req, res) => {
-    res.render('login', { page: 'Login' })
-})
-
-app.post('/login', catchAsync(async (req, res, next) => {
-    let userLogin = req.body;
-    const storedUserInfo = await User.find({ email: userLogin.email });
-    if (!storedUserInfo.length) {
-        throw new AppError('User does not exist');
-    } else {
-        const validPassword = await bcrypt.compare(userLogin.password, storedUserInfo[0].password)
-        if (validPassword) {
-            req.session.user_id = storedUserInfo[0]._id;
-            req.session.name = storedUserInfo[0].name;
-            res.redirect('/')
-        } else {
-            throw new AppError('Wrong password', 404);
-        }
-    }
-}))
-
-//***** HOME PAGE *****
-app.get('/', requireLogin, catchAsync(async (req, res) => {
+//****************************************
+//*             HOME PAGE                *
+//****************************************
+app.get('/home', requireLogin, catchAsync(async (req, res) => {
     const user_id = req.session.user_id;
     const name = req.session.name;
-    const userHoldings = await Stock.find({ user: user_id });
 
+    const userHoldings = await Stock.find({ user: user_id });
+    //obtain individual stock info
     for (let holding of userHoldings) {
-        let marketInfo = await obtainMarketInfo(holding.ticker)
-        holding.currentPrice = marketInfo.data.data[0].close;
+        let compInfo = await obtainCompanyInfo(holding.ticker);
+        console.log(compInfo);
+        console.log(holding);
+        holding.lastPrice = compInfo.close;
+        holding.name = compInfo.name;
+        holding.stock_exchange = compInfo.stock_exchange;
+        holding.posValue = holding.lastPrice * holding.quantity;
+        holding.unrealisedValue = Math.round((parseFloat(holding.lastPrice) - parseFloat(holding.price)) * 100) / 100;
+        holding.unrealisedPercent = Math.round((holding.unrealisedValue / parseFloat(holding.price)) * 10000) / 100;
     }
 
     res.render('home', { page: 'Homepage', stocks: userHoldings, name: name })
 }))
 
-// ***** BUY PAGE *****
+//****************************************
+//*            BUY PAGE                *
+//****************************************
 app.get('/buy', requireLogin, (req, res) => {
     res.render('buy', { page: 'Buy Stock' })
 })
@@ -137,7 +180,7 @@ app.post('/buy', requireLogin, catchAsync(async (req, res) => {
 
     //check if valid ticker
     const response = await obtainMarketInfo(ticker);
-    if (response.status !== 200) throw new AppError(response.statusText, response.status)
+    // if (response.status !== 200) throw new AppError(response.statusText, response.status)
 
     const user = await User.findOne({ _id: req.session.user_id })
     const stock = await Stock.find({ user: user._id, ticker: ticker });
@@ -147,16 +190,19 @@ app.post('/buy', requireLogin, catchAsync(async (req, res) => {
         let newStockPrice = Math.round((((stock[0].price * stock[0].quantity) + (price * quantity)) / newStockQuantity) * 100) / 100;
         await Stock.updateOne({ _id: stockId }, { price: newStockPrice, quantity: newStockQuantity })
     } else {
-        const newStock = new Stock({ ticker: ticker.toUpperCase(), price: price, quantity: quantity })
+        let newStockPrice = Math.round(price * 100) / 100;
+        const newStock = new Stock({ ticker: ticker.toUpperCase(), price: newStockPrice, quantity: quantity })
         newStock.user = user;
         await newStock.save();
     }
-    res.redirect('/')
+    res.redirect('/home')
     // add buy alert
 }))
 
 
-//***** SELL PAGE *****
+//****************************************
+//*             SELL PAGE                *
+//****************************************
 app.get('/sell', requireLogin, catchAsync(async (req, res) => {
     const user_id = req.session.user_id;
     const userHoldings = await Stock.find({ user: user_id });
@@ -176,11 +222,11 @@ app.post('/sell', requireLogin, catchAsync(async (req, res, next) => {
 
         } else if (stockQuantity === parseInt(quantity)) {
             await Stock.deleteOne({ _id: stockId });
-            res.redirect('/');
+            res.redirect('/home');
         } else {
             let newStockQuantity = stockQuantity - parseInt(quantity, 10);
             await Stock.updateOne({ _id: stockId }, { quantity: newStockQuantity })
-            res.redirect('/');
+            res.redirect('/home');
         }
     } else {
         throw new AppError('stock does not exist')
@@ -188,22 +234,22 @@ app.post('/sell', requireLogin, catchAsync(async (req, res, next) => {
     // // add buy alert
 }))
 
-//***** LOGOUT ROUTE *****
+//****************************************
+//*            LOGOUT ROUTE              *
+//****************************************
 app.get('/logout', requireLogin, (req, res) => {
     req.session.user_id = null;
-    res.redirect('/login');
+    res.redirect('/');
 })
 
-//***** SEARCH PAGE *****
-app.get('/search', requireLogin, catchAsync(async (req, res) => {
+//****************************************
+//*            SEARCH PAGE               *
+//****************************************
+app.get('/stockinfo', requireLogin, catchAsync(async (req, res) => {
     let ticker = req.query.search;
     ticker = ticker.toUpperCase();
 
-    //check if valid ticker
-    const response = await obtainMarketInfo(ticker);
-    if (response.status !== 200) throw new AppError(response.statusText, response.status)
-    let marketInfo = response.data.data[0];
-
+    let companyInfo = await obtainCompanyInfo(ticker);
 
     //check if user possess stock
     const user_id = req.session.user_id;
@@ -212,14 +258,17 @@ app.get('/search', requireLogin, catchAsync(async (req, res) => {
     let userStock = await Stock.find({ user: user_id, ticker: ticker });
     if (!userStock.length) userStock = false;
 
-    res.render('search', { page: 'search', marketInfo: marketInfo, userStock: userStock })
+    res.render('search', { page: 'search', companyInfo: companyInfo, userStock: userStock })
 }))
 
 
-//***** ERROR HANDLER *****
+//****************************************
+//*            ERROR HANDLER             *
+//****************************************
 app.use((err, req, res, next) => {
+    console.log(err);
     const { status = 500, message = 'Something went wrong' } = err;
-    res.status(status).send(message);
+    res.render('error', { status, message })
 })
 
 app.listen(3000, () => {
@@ -230,6 +279,11 @@ app.listen(3000, () => {
 
 
 
+
 // to do:
 // error page
-//search page with card.
+
+//card to replace table at home page. -- or dropdown card aftr table
+// if name two separate words, split words
+//add container for navbar so that navbar content is aligned with content in body.
+//buy or add, sell or remove as wording. - ask them

@@ -6,15 +6,20 @@
         <div class="card text-center" style="width: 18rem;">
             <div class="card-body">
                 <h1 class="card-title">
-                    <%-marketInfo.symbol%>
+                    <%-companyInfo.symbol%>
                 </h1>
-                <p class="card-text">company name</p>
+                <p class="card-text">
+                    <%-companyInfo.name%>
+                </p>
+                <p class="card-text text-muted">
+                    <%-companyInfo.stock_exchange%>
+                </p>
             </div>
             <ul class="list-group list-group-flush">
                 <li class="list-group-item">
                     <p class="card-text"><small class="text-muted">Current Price</small></p>
 
-                    $<%-marketInfo.close%>
+                    $<%-companyInfo.close%>
                 </li>
                 <% if (userStock) {%>
 
@@ -45,6 +50,4 @@
         </div>
 
     </div>
-    </body>
-
-    </html>
+    <%- include('partials/footer') %>

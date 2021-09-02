@@ -6,72 +6,65 @@
         <div class="container mt-5">
             <h1>Hello, <%- name %>.</h1>
         </div>
+        <% if (stocks.length) { %>
 
-        <div class="container mt-5">
-            <h3>Portfolio Summary</h3>
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th scope="col">Ticker</th>
-                        <th scope="col">Current Price</th>
-                        <th scope="col">Buy price</th>
-                        <th scope="col">Units</th>
-                        <th scope="col">Total Current Value</th>
-                        <th scope="col">profit/loss</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% if (stocks) { %>
+            <div class="container mt-5 border border-dark">
+                <h3 class='mt-3'>Portfolio Summary</h3>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col">Ticker</th>
+                            <th scope="col">Last Price</th>
+                            <th scope="col">Average Price</th>
+                            <th scope="col">Position</th>
+                            <th scope="col">Position Value</th>
+                            <th scope="col">Unrealised profit/loss</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                         <% for (let stock of stocks) { %>
                             <tr>
                                 <th scope="row">
-                                    <p>
-                                        <%- stock.ticker %>
-                                    </p>
+                                    <%- stock.ticker %>
                                 </th>
                                 <td>
-                                    <p>
-                                        $<%- stock.currentPrice %>
-                                    </p>
+                                    $<%- stock.lastPrice %>
                                 </td>
                                 <td>
-                                    <p>
-                                        $<%- stock.price %>
-                                    </p>
+                                    $<%- stock.price %>
                                 </td>
                                 <td>
-                                    <p>
-                                        <%- stock.quantity %>
-                                    </p>
+                                    <%- stock.quantity %>
                                 </td>
                                 <td>
-                                    <p>
-                                        $<%- stock.currentPrice*stock.quantity %>
-                                    </p>
+                                    $<%- stock.posValue %>
                                 </td>
                                 <td>
-                                    <p>
-                                        $<%- (stock.currentPrice*stock.quantity) - (stock.price*stock.quantity)%>
-                                    </p>
+                                    $<%- stock.unrealisedValue%>, (<%- stock.unrealisedPercent%>%)
                                 </td>
 
                             </tr>
                             <% } %>
-                                <% } %>
 
-                </tbody>
-            </table>
-            <a class="btn btn-sm btn-success" href='/buy'>+</a>
-            <a class="btn btn-sm btn-danger" href='/sell'>-</a>
-        </div>
+
+                    </tbody>
+                </table>
+                <div class='mb-3'>
+                    <div class='btn-group' role="group">
+                        <a class="btn btn-sm btn-outline-dark" href='/buy'>+</a>
+                        <a class="btn btn-sm btn-outline-dark" href='/sell'>-</a>
+                    </div>
+                </div>
+                <% } else { %>
+                    <div class='mt-5'>
+                        <h3>You do not own any stocks.</h3>
+                        <a class="btn btn-outline-dark" href='/buy'>Add a stock</a>
+                    </div>
+                    <% } %>
+
+
+            </div>
     </div>
 
 
-
-
-
-
-
-    </body>
-
-    </html>
+    <%- include('partials/footer') %>
