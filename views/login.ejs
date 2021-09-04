@@ -3,12 +3,12 @@
         <div class="container mt-5 pt-3 text-center">
             <!-- <h1 class="fst-italic fw-bold pb-5" href="/">stocktracker</h1> -->
 
-            <div class="card w-25 mx-auto mt-5">
-                <div class="card-header p-0">
-                    <div class="btn-group w-100" role="group">
-                        <a class="btn btn-outline-dark active" data-bs-toggle="button" id='loginButton'
+            <div class="card w-25 mx-auto mt-5  border border-dark">
+                <div class="card-header p-0 border-bottom-0">
+                    <div class="btn-group w-100 row" role="group">
+                        <a class="btn btn-outline-dark active col-6 border-0" data-bs-toggle="button" id='loginButton'
                             onclick="switchLogin()">Login</a>
-                        <a class="btn btn-outline-dark" data-bs-toggle="button" id='registerButton'
+                        <a class="btn btn-outline-dark col-6 border-0" data-bs-toggle="button" id='registerButton'
                             onclick='switchRegister()'>Register</a>
                     </div>
                 </div>
@@ -16,7 +16,7 @@
                     <div class="card-body">
                         <h1 class="fst-italic fw-bold mt-4" href="/">stocktracker</h1>
                         <h5 class='mt-3'>Welcome back!</h5>
-                        <form action='/login' method='POST' class='mt-3' a>
+                        <form action='/login' method='POST' class='mt-4' a>
                             <div>
                                 <input type="email" class="form-control" placeholder="Email" name='email' autofocus
                                     required>
@@ -37,7 +37,7 @@
                         <h1 class="fst-italic fw-bold mt-4" href="/">stocktracker</h1>
 
                         <h5 class='mt-3'>Create a new account!</h5>
-                        <form action='/register' method='POST' class='mt-3' a>
+                        <form action='/register' method='POST' class='mt-4' a>
                             <div>
                                 <input type="text" class="form-control" placeholder="Name" name='name' autofocus
                                     required>

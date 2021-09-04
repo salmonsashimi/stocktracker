@@ -96,6 +96,12 @@ async function obtainCompanyInfo(ticker) {
     return companyInfo;
 }
 
+function twoDecimalPlace(num) {
+    return (Math.round(num * 100) / 100).toFixed(2);
+}
+
+
+
 
 
 
@@ -156,12 +162,12 @@ app.get('/home', requireLogin, catchAsync(async (req, res) => {
         let compInfo = await obtainCompanyInfo(holding.ticker);
         console.log(compInfo);
         console.log(holding);
-        holding.lastPrice = compInfo.close;
+        holding.lastPrice = twoDecimalPlace(compInfo.close);
         holding.name = compInfo.name;
         holding.stock_exchange = compInfo.stock_exchange;
-        holding.posValue = holding.lastPrice * holding.quantity;
-        holding.unrealisedValue = Math.round((parseFloat(holding.lastPrice) - parseFloat(holding.price)) * 100) / 100;
-        holding.unrealisedPercent = Math.round((holding.unrealisedValue / parseFloat(holding.price)) * 10000) / 100;
+        holding.posValue = twoDecimalPlace(holding.lastPrice * holding.quantity);
+        holding.unrealisedValue = twoDecimalPlace(parseFloat(holding.lastPrice) - parseFloat(holding.price));
+        holding.unrealisedPercent = twoDecimalPlace(holding.unrealisedValue / parseFloat(holding.price) * 100);
     }
 
     res.render('home', { page: 'Homepage', stocks: userHoldings, name: name })
@@ -186,11 +192,11 @@ app.post('/buy', requireLogin, catchAsync(async (req, res) => {
     const stock = await Stock.find({ user: user._id, ticker: ticker });
     if (stock.length) {
         let stockId = stock[0]._id;
-        let newStockQuantity = stock[0].quantity + parseInt(quantity, 10);
-        let newStockPrice = Math.round((((stock[0].price * stock[0].quantity) + (price * quantity)) / newStockQuantity) * 100) / 100;
+        let newStockQuantity = stock[0].quantity + parseFloat(quantity, 10);
+        let newStockPrice = twoDecimalPlace(((stock[0].price * stock[0].quantity) + (price * quantity)) / newStockQuantity);
         await Stock.updateOne({ _id: stockId }, { price: newStockPrice, quantity: newStockQuantity })
     } else {
-        let newStockPrice = Math.round(price * 100) / 100;
+        let newStockPrice = twoDecimalPlace(price);
         const newStock = new Stock({ ticker: ticker.toUpperCase(), price: newStockPrice, quantity: quantity })
         newStock.user = user;
         await newStock.save();
@@ -217,14 +223,14 @@ app.post('/sell', requireLogin, catchAsync(async (req, res, next) => {
     if (stock.length) {
         let stockId = stock[0]._id;
         let stockQuantity = stock[0].quantity;
-        if (stockQuantity < parseInt(quantity)) {
+        if (stockQuantity < parseFloat(quantity)) {
             throw new AppError('you dont have so many stock to sell')
 
-        } else if (stockQuantity === parseInt(quantity)) {
+        } else if (stockQuantity === parseFloat(quantity)) {
             await Stock.deleteOne({ _id: stockId });
             res.redirect('/home');
         } else {
-            let newStockQuantity = stockQuantity - parseInt(quantity, 10);
+            let newStockQuantity = stockQuantity - parseFloat(quantity, 10);
             await Stock.updateOne({ _id: stockId }, { quantity: newStockQuantity })
             res.redirect('/home');
         }
@@ -287,3 +293,15 @@ app.listen(3000, () => {
 // if name two separate words, split words
 //add container for navbar so that navbar content is aligned with content in body.
 //buy or add, sell or remove as wording. - ask them
+
+//check jstock features and mimic: 
+// - click in for more stock info.
+//- chart with stock price
+// - your performance with the stock 
+
+
+//home page split into overall stock portfolio and current stock holdings
+// performance: show how much Gain
+// overall yield
+//total current value
+// tootal current cost

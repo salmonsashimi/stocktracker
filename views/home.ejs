@@ -39,8 +39,13 @@
                                 <td>
                                     $<%- stock.posValue %>
                                 </td>
-                                <td>
-                                    $<%- stock.unrealisedValue%>, (<%- stock.unrealisedPercent%>%)
+                                <td <% if (stock.unrealisedValue < 0) {%>
+                                    class='text-danger'
+                                    <% } else { %>
+                                        class='text-success'
+                                        <% } %>
+                                            >
+                                            $<%- stock.unrealisedValue%>, (<%- stock.unrealisedPercent%>%)
                                 </td>
 
                             </tr>
