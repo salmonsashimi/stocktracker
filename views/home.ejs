@@ -2,58 +2,93 @@
 
 
 
-    <div class="section text-center">
+    <div class="section text-center mb-5">
         <div class="container mt-5">
             <h1>Hello, <%- name %>.</h1>
         </div>
         <% if (stocks.length) { %>
 
-            <div class="container mt-5 border border-dark">
-                <h3 class='mt-3'>Portfolio Summary</h3>
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th scope="col">Ticker</th>
-                            <th scope="col">Last Price</th>
-                            <th scope="col">Average Price</th>
-                            <th scope="col">Position</th>
-                            <th scope="col">Position Value</th>
-                            <th scope="col">Unrealised profit/loss</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% for (let stock of stocks) { %>
+            <div class="container">
+                <div class='container p-4 mt-4 text-center bg-light'>
+
+                    <h1>Overall Performance</h1>
+                    <div class='row'>
+                        <div class="col-2">
+                            <h2>value</h2>
+                            <h2>cost</h2>
+                        </div>
+                        <div class="col-10">
+                            <canvas id="myChart" width="876" height="219"></canvas>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-4 border border-dark">
+                            <h2>Total value</h2>
+                            <h1>
+                                <%-totalValue%>
+                            </h1>
+                        </div>
+
+                        <div class="col-4 border border-dark">
+                            <h2>Total cost</h2>
+                            <h1>
+                                <%-totalCost%>
+                            </h1>
+                        </div>
+                        <div class="col-4 border border-dark">
+                            <h2>current yield %</h2>
+                            <h1>10000 %</h1>
+                        </div>
+                    </div>
+
+                </div>
+                <div class='border-top border-secondary mt-5'>
+                    <h1 class='mt-3'>Open Positions</h1>
+                    <table class="table table-striped">
+                        <thead>
                             <tr>
-                                <th scope="row">
-                                    <%- stock.ticker %>
-                                </th>
-                                <td>
-                                    $<%- stock.lastPrice %>
-                                </td>
-                                <td>
-                                    $<%- stock.price %>
-                                </td>
-                                <td>
-                                    <%- stock.quantity %>
-                                </td>
-                                <td>
-                                    $<%- stock.posValue %>
-                                </td>
-                                <td <% if (stock.unrealisedValue < 0) {%>
-                                    class='text-danger'
-                                    <% } else { %>
-                                        class='text-success'
-                                        <% } %>
-                                            >
-                                            $<%- stock.unrealisedValue%>, (<%- stock.unrealisedPercent%>%)
-                                </td>
-
+                                <th scope="col">Ticker</th>
+                                <th scope="col">Last Price</th>
+                                <th scope="col">Average Price</th>
+                                <th scope="col">Position</th>
+                                <th scope="col">Position Value</th>
+                                <th scope="col">Unrealised profit/loss</th>
                             </tr>
-                            <% } %>
+                        </thead>
+                        <tbody>
+                            <% for (let stock of stocks) { %>
+                                <tr>
+                                    <th scope="row">
+                                        <%- stock.ticker %>
+                                    </th>
+                                    <td>
+                                        $<%- stock.lastPrice %>
+                                    </td>
+                                    <td>
+                                        $<%- stock.price %>
+                                    </td>
+                                    <td>
+                                        <%- stock.quantity %>
+                                    </td>
+                                    <td>
+                                        $<%- stock.posValue %>
+                                    </td>
+                                    <td <% if (stock.unrealisedValue < 0) {%>
+                                        class='text-danger'
+                                        <% } else { %>
+                                            class='text-success'
+                                            <% } %>
+                                                >
+                                                $<%- stock.unrealisedValue%>, (<%- stock.unrealisedPercent%>%)
+                                    </td>
+
+                                </tr>
+                                <% } %>
 
 
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
                 <div class='mb-3'>
                     <div class='btn-group' role="group">
                         <a class="btn btn-sm btn-outline-dark" href='/buy'>+</a>
@@ -70,6 +105,8 @@
 
             </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="chart.js" cost='<%=totalCost%>' value='<%=totalValue %>' charset='utf-8'></script>
 
 
     <%- include('partials/footer') %>

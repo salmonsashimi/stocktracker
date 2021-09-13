@@ -111,7 +111,12 @@ function twoDecimalPlace(num) {
 app.get('/', (req, res) => {
     res.render('login', { page: 'Login' })
 })
+app.get('/test', (req, res) => {
+    let cost = 1000;
+    let value = 2000;
 
+    res.render('test', { cost, value })
+})
 app.post('/login', catchAsync(async (req, res, next) => {
     let userLogin = req.body;
     const storedUserInfo = await User.find({ email: userLogin.email });
@@ -157,6 +162,9 @@ app.get('/home', requireLogin, catchAsync(async (req, res) => {
     const name = req.session.name;
 
     const userHoldings = await Stock.find({ user: user_id });
+    let totalCost = 0;
+    let totalValue = 0;
+
     //obtain individual stock info
     for (let holding of userHoldings) {
         let compInfo = await obtainCompanyInfo(holding.ticker);
@@ -168,9 +176,13 @@ app.get('/home', requireLogin, catchAsync(async (req, res) => {
         holding.posValue = twoDecimalPlace(holding.lastPrice * holding.quantity);
         holding.unrealisedValue = twoDecimalPlace(parseFloat(holding.lastPrice) - parseFloat(holding.price));
         holding.unrealisedPercent = twoDecimalPlace(holding.unrealisedValue / parseFloat(holding.price) * 100);
+
+        //calculte total cost of portfolio
+        totalCost += parseFloat(holding.price) * holding.quantity;
+        totalValue += parseFloat(holding.posValue);
     }
 
-    res.render('home', { page: 'Homepage', stocks: userHoldings, name: name })
+    res.render('home', { page: 'Homepage', stocks: userHoldings, name, totalCost, totalValue })
 }))
 
 //****************************************
@@ -217,6 +229,7 @@ app.get('/sell', requireLogin, catchAsync(async (req, res) => {
 
 app.post('/sell', requireLogin, catchAsync(async (req, res, next) => {
     const { ticker, price, quantity } = req.body;
+    console.log(req.body);
     console.log(ticker, price, quantity);
     const user = await User.findOne({ _id: req.session.user_id })
     const stock = await Stock.find({ user: user, ticker: ticker });
@@ -305,3 +318,8 @@ app.listen(3000, () => {
 // overall yield
 //total current value
 // tootal current cost
+
+
+//sort by in the portfolio table
+// history of trades
+// pop up page for buy/sell instead of exact page.
