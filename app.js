@@ -18,6 +18,7 @@ const mongoose = require('mongoose')
 const axios = require('axios');
 const User = require(__dirname + '/models/User')
 const Stock = require(__dirname + '/models/Stock')
+const Trade = require(__dirname + '/models/Trade')
 const AppError = require(__dirname + '/models/AppError');
 
 
@@ -82,8 +83,6 @@ async function obtainCompanyName(ticker) {
 async function obtainCompanyInfo(ticker) {
     let marketInfo = await obtainMarketInfo(ticker);
     let companyName = await obtainCompanyName(ticker);
-    console.log(marketInfo.data)
-    console.log(companyName.data)
     let { name, symbol, stock_exchange } = companyName.data;
     let { close } = marketInfo.data.data[0];
     let companyInfo = {
@@ -92,12 +91,13 @@ async function obtainCompanyInfo(ticker) {
         stock_exchange: stock_exchange.acronym,
         close: close
     }
-    console.log(companyInfo)
     return companyInfo;
 }
 
 function twoDecimalPlace(num) {
-    return (Math.round(num * 100) / 100).toFixed(2);
+    let int = (Math.round(num * 100) / 100).toFixed(2);
+    let str = num.toLocaleString('en-US', { maximumFractionDigits: 2 });
+    return [int, str];
 }
 
 
@@ -159,7 +159,8 @@ app.post('/register', catchAsync(async (req, res) => {
 //****************************************
 app.get('/home', requireLogin, catchAsync(async (req, res) => {
     const user_id = req.session.user_id;
-    const name = req.session.name;
+    const user = await User.findOne({ _id: user_id });
+    const name = user.name;
 
     const userHoldings = await Stock.find({ user: user_id });
     let totalCost = 0;
@@ -168,21 +169,56 @@ app.get('/home', requireLogin, catchAsync(async (req, res) => {
     //obtain individual stock info
     for (let holding of userHoldings) {
         let compInfo = await obtainCompanyInfo(holding.ticker);
-        console.log(compInfo);
-        console.log(holding);
-        holding.lastPrice = twoDecimalPlace(compInfo.close);
         holding.name = compInfo.name;
+        holding.lastPrice = twoDecimalPlace(compInfo.close);
         holding.stock_exchange = compInfo.stock_exchange;
-        holding.posValue = twoDecimalPlace(holding.lastPrice * holding.quantity);
-        holding.unrealisedValue = twoDecimalPlace(parseFloat(holding.lastPrice) - parseFloat(holding.price));
-        holding.unrealisedPercent = twoDecimalPlace(holding.unrealisedValue / parseFloat(holding.price) * 100);
+        holding.posValue = twoDecimalPlace(holding.lastPrice[0] * holding.quantity);
+        holding.unrealisedValue = twoDecimalPlace(parseFloat(holding.lastPrice[0]) - parseFloat(holding.price));
+        holding.unrealisedPercent = twoDecimalPlace(holding.unrealisedValue[0] / parseFloat(holding.price) * 100);
+        holding.unrealisedValue = twoDecimalPlace(holding.unrealisedValue[0] * holding.quantity);
 
         //calculte total cost of portfolio
         totalCost += parseFloat(holding.price) * holding.quantity;
-        totalValue += parseFloat(holding.posValue);
+        totalValue += parseFloat(holding.posValue[0]);
+    }
+    totalValue = twoDecimalPlace(totalValue);
+    totalCost = twoDecimalPlace(totalCost);
+    currentValue = twoDecimalPlace(totalValue[0] - totalCost[0]);
+    currentPercent = twoDecimalPlace(currentValue[0] / totalCost[0] * 100);
+
+    res.render('home', { page: 'Homepage', stocks: userHoldings, name, totalCost, totalValue, currentValue, currentPercent })
+}))
+
+
+app.get('/positions', requireLogin, catchAsync(async (req, res) => {
+    const user_id = req.session.user_id;
+
+    const userHoldings = await Stock.find({ user: user_id });
+    let totalCost = 0;
+    let totalValue = 0;
+
+    //obtain individual stock info
+    for (let holding of userHoldings) {
+        let compInfo = await obtainCompanyInfo(holding.ticker);
+        holding.name = compInfo.name;
+        holding.lastPrice = twoDecimalPlace(compInfo.close);
+        holding.stock_exchange = compInfo.stock_exchange;
+        holding.posValue = twoDecimalPlace(holding.lastPrice[0] * holding.quantity);
+        holding.unrealisedValue = twoDecimalPlace(parseFloat(holding.lastPrice[0]) - parseFloat(holding.price));
+        holding.unrealisedPercent = twoDecimalPlace(holding.unrealisedValue[0] / parseFloat(holding.price) * 100);
+        holding.unrealisedValue = twoDecimalPlace(holding.unrealisedValue[0] * holding.quantity);
+
+        //calculte total cost of portfolio
+        totalCost += parseFloat(holding.price) * holding.quantity;
+        totalValue += parseFloat(holding.posValue[0]);
     }
 
-    res.render('home', { page: 'Homepage', stocks: userHoldings, name, totalCost, totalValue })
+    console.log(totalValue[0]);
+    console.log(totalCost[0]);
+    currentValue = twoDecimalPlace(totalValue[0] - totalCost[0]);
+    currentPercent = twoDecimalPlace(currentValue[0] / totalCost[0] * 100);
+
+    res.render('positions', { page: 'Portfolio', stocks: userHoldings, totalCost, totalValue, currentValue, currentPercent })
 }))
 
 //****************************************
@@ -206,13 +242,18 @@ app.post('/buy', requireLogin, catchAsync(async (req, res) => {
         let stockId = stock[0]._id;
         let newStockQuantity = stock[0].quantity + parseFloat(quantity, 10);
         let newStockPrice = twoDecimalPlace(((stock[0].price * stock[0].quantity) + (price * quantity)) / newStockQuantity);
-        await Stock.updateOne({ _id: stockId }, { price: newStockPrice, quantity: newStockQuantity })
+        await Stock.updateOne({ _id: stockId }, { price: newStockPrice[0], quantity: newStockQuantity })
     } else {
         let newStockPrice = twoDecimalPlace(price);
-        const newStock = new Stock({ ticker: ticker.toUpperCase(), price: newStockPrice, quantity: quantity })
+        const newStock = new Stock({ ticker: ticker.toUpperCase(), price: newStockPrice[0], quantity: quantity })
         newStock.user = user;
         await newStock.save();
     }
+    const newTrade = new Trade({ ticker: ticker.toUpperCase(), price: price, quantity: quantity, transaction: 'Buy' })
+    newTrade.user = user;
+    await newTrade.save()
+
+
     res.redirect('/home')
     // add buy alert
 }))
@@ -229,8 +270,6 @@ app.get('/sell', requireLogin, catchAsync(async (req, res) => {
 
 app.post('/sell', requireLogin, catchAsync(async (req, res, next) => {
     const { ticker, price, quantity } = req.body;
-    console.log(req.body);
-    console.log(ticker, price, quantity);
     const user = await User.findOne({ _id: req.session.user_id })
     const stock = await Stock.find({ user: user, ticker: ticker });
     if (stock.length) {
@@ -240,15 +279,21 @@ app.post('/sell', requireLogin, catchAsync(async (req, res, next) => {
             throw new AppError('you dont have so many stock to sell')
 
         } else if (stockQuantity === parseFloat(quantity)) {
+            const newTrade = new Trade({ ticker: ticker.toUpperCase(), price: price, quantity: quantity, transaction: 'Sell' })
+            newTrade.user = user;
+            await newTrade.save()
             await Stock.deleteOne({ _id: stockId });
             res.redirect('/home');
         } else {
+            const newTrade = new Trade({ ticker: ticker.toUpperCase(), price: price, quantity: quantity, transaction: 'Sell' })
+            newTrade.user = user;
+            await newTrade.save()
             let newStockQuantity = stockQuantity - parseFloat(quantity, 10);
             await Stock.updateOne({ _id: stockId }, { quantity: newStockQuantity })
             res.redirect('/home');
         }
     } else {
-        throw new AppError('stock does not exist')
+        throw new AppError('Stock does not exist')
     }
     // // add buy alert
 }))
@@ -304,8 +349,6 @@ app.listen(3000, () => {
 
 //card to replace table at home page. -- or dropdown card aftr table
 // if name two separate words, split words
-//add container for navbar so that navbar content is aligned with content in body.
-//buy or add, sell or remove as wording. - ask them
 
 //check jstock features and mimic: 
 // - click in for more stock info.
@@ -313,13 +356,9 @@ app.listen(3000, () => {
 // - your performance with the stock 
 
 
-//home page split into overall stock portfolio and current stock holdings
-// performance: show how much Gain
-// overall yield
-//total current value
-// tootal current cost
-
-
 //sort by in the portfolio table
-// history of trades
+//  add in history of trades
 // pop up page for buy/sell instead of exact page.
+
+
+//black navbar - only expand search box when clicked
