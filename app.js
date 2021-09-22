@@ -7,22 +7,22 @@
 
 // **when deploying app on server, look for config vars and see how to set them up. 
 
-require('dotenv').config();
 const express = require('express');
 const app = express();
 const path = require('path');
 
 const bcrypt = require('bcrypt');
 const session = require('express-session');
-const mongoose = require('mongoose')
-const axios = require('axios');
-const User = require(__dirname + '/models/User')
-const Stock = require(__dirname + '/models/Stock')
-const Trade = require(__dirname + '/models/Trade')
-const AppError = require(__dirname + '/models/AppError');
+const mongoose = require('mongoose');
+const flash = require('connect-flash');
+const User = require(__dirname + '/models/User');
+const Stock = require(__dirname + '/models/Stock');
+const Trade = require(__dirname + '/models/Trade');
+const AppError = require(__dirname + '/utils/AppError');
+const catchAsync = require(__dirname + '/utils/catchAsync');
+const numConverter = require(__dirname + '/utils/numConverter');
+const obtainCompanyInfo = require(__dirname + '/utils/obtainCompanyInfo');
 
-
-const API_KEY = process.env.API_KEY;
 
 app.set('views', path.join(__dirname + '/views'));
 app.set('view engine', 'ejs');
@@ -34,6 +34,11 @@ app.use(session({
     saveUninitialized: true,
 }));
 
+app.use(flash());
+app.use((req, res, next) => {
+    res.locals.success = req.flash('success');
+    next();
+})
 
 mongoose.connect('mongodb://localhost:27017/stocktracker', {
     useNewUrlParser: true,
@@ -52,57 +57,23 @@ const requireLogin = (req, res, next) => {
     next();
 }
 
-function catchAsync(fn) {
-    return function (req, res, next) {
-        fn(req, res, next).catch(error => next(error))
-    }
-}
 
-async function obtainMarketInfo(ticker) {
-    const URL = 'http://api.marketstack.com/v1/eod/latest';
-    const params = { params: { access_key: API_KEY, symbols: ticker } }
-    try {
-        const response = await axios.get(URL, params)
-        return response;
-    } catch (error) {
-        throw new AppError(error.response.statusText, error.response.status);
-    }
-}
 
-async function obtainCompanyName(ticker) {
-    const URL = 'http://api.marketstack.com/v1/tickers/' + ticker;
-    const params = { params: { access_key: API_KEY } }
-    try {
-        const response = await axios.get(URL, params)
-        return response;
-    } catch (error) {
-        throw new AppError(error.response.statusText, error.response.status);
-    }
-}
-
-async function obtainCompanyInfo(ticker) {
-    let marketInfo = await obtainMarketInfo(ticker);
-    let companyName = await obtainCompanyName(ticker);
-    let { name, symbol, stock_exchange } = companyName.data;
-    let { close } = marketInfo.data.data[0];
-    let companyInfo = {
-        name: name,
-        symbol: symbol,
-        stock_exchange: stock_exchange.acronym,
-        close: close
-    }
-    return companyInfo;
-}
-
-function twoDecimalPlace(num) {
-    let int = (Math.round(num * 100) / 100).toFixed(2);
-    let str = num.toLocaleString('en-US', { maximumFractionDigits: 2 });
-    return [int, str];
+const getToday = () => {
+    let date = new Date()
+    return date.toLocaleDateString('en-GB');
 }
 
 
+app.get('/test', (req, res) => {
+    values = [1000, 2000];
+    Stock.convertNum(123);
 
+    console.log(new Date().toLocaleDateString('en-GB'));
 
+    res.render('test', { values })
+
+})
 
 
 //****************************************
@@ -111,12 +82,8 @@ function twoDecimalPlace(num) {
 app.get('/', (req, res) => {
     res.render('login', { page: 'Login' })
 })
-app.get('/test', (req, res) => {
-    let cost = 1000;
-    let value = 2000;
 
-    res.render('test', { cost, value })
-})
+
 app.post('/login', catchAsync(async (req, res, next) => {
     let userLogin = req.body;
     const storedUserInfo = await User.find({ email: userLogin.email });
@@ -126,7 +93,6 @@ app.post('/login', catchAsync(async (req, res, next) => {
         const validPassword = await bcrypt.compare(userLogin.password, storedUserInfo[0].password)
         if (validPassword) {
             req.session.user_id = storedUserInfo[0]._id;
-            req.session.name = storedUserInfo[0].name;
             res.redirect('/home')
         } else {
             throw new AppError('Wrong password', 404);
@@ -136,7 +102,13 @@ app.post('/login', catchAsync(async (req, res, next) => {
 
 app.post('/register', catchAsync(async (req, res) => {
     let { name, email, password, password2 } = req.body;
-    name = name.charAt(0).toUpperCase() + name.slice(1);
+    //capitalise name 
+    let arrayName = name.split(" ");
+    for (let i = 0; i < arrayName.length; i++) {
+        arrayName[i] = arrayName[i].charAt(0).toUpperCase() + arrayName[i].slice(1).toLowerCase();
+    }
+    name = arrayName.join(" ");
+
     const userExist = await User.find({ email: email });
     if (userExist.length) throw new AppError('Email already exists.');
     if (password !== password2) throw new AppError('Password do not match.');
@@ -146,10 +118,8 @@ app.post('/register', catchAsync(async (req, res) => {
         email: email,
         password: hashedPassword
     })
-    await newUser.save()
-    console.log(newUser._id);
     req.session.user_id = newUser._id
-    req.session.name = newUser.name;
+    await newUser.save()
     res.redirect('/home')
 }))
 
@@ -159,38 +129,47 @@ app.post('/register', catchAsync(async (req, res) => {
 //****************************************
 app.get('/home', requireLogin, catchAsync(async (req, res) => {
     const user_id = req.session.user_id;
-    const user = await User.findOne({ _id: user_id });
-    const name = user.name;
+    let user = await User.findOne({ _id: user_id });
+    let name = user.name;
 
     const userHoldings = await Stock.find({ user: user_id });
     let totalCost = 0;
     let totalValue = 0;
 
+
     //obtain individual stock info
     for (let holding of userHoldings) {
         let compInfo = await obtainCompanyInfo(holding.ticker);
         holding.name = compInfo.name;
-        holding.lastPrice = twoDecimalPlace(compInfo.close);
+        holding.lastPrice = numConverter(compInfo.close);
         holding.stock_exchange = compInfo.stock_exchange;
-        holding.posValue = twoDecimalPlace(holding.lastPrice[0] * holding.quantity);
-        holding.unrealisedValue = twoDecimalPlace(parseFloat(holding.lastPrice[0]) - parseFloat(holding.price));
-        holding.unrealisedPercent = twoDecimalPlace(holding.unrealisedValue[0] / parseFloat(holding.price) * 100);
-        holding.unrealisedValue = twoDecimalPlace(holding.unrealisedValue[0] * holding.quantity);
+        holding.posValue = numConverter(holding.lastPrice[0] * holding.quantity);
+        holding.unrealisedValue = numConverter(parseFloat(holding.lastPrice[0]) - parseFloat(holding.price));
+        holding.unrealisedPercent = numConverter(holding.unrealisedValue[0] / parseFloat(holding.price) * 100);
+        holding.unrealisedValue = numConverter(holding.unrealisedValue[0] * holding.quantity);
 
         //calculte total cost of portfolio
         totalCost += parseFloat(holding.price) * holding.quantity;
         totalValue += parseFloat(holding.posValue[0]);
     }
-    totalValue = twoDecimalPlace(totalValue);
-    totalCost = twoDecimalPlace(totalCost);
-    currentValue = twoDecimalPlace(totalValue[0] - totalCost[0]);
-    currentPercent = twoDecimalPlace(currentValue[0] / totalCost[0] * 100);
 
+    //sort by top 5
+    userHoldings.sort((a, b) => b.posValue[0] - a.posValue[0])
+    userHoldings.splice(5)
+
+    //overall performance
+    totalValue = numConverter(totalValue);
+    totalCost = numConverter(totalCost);
+    currentValue = numConverter(totalValue[0] - totalCost[0]);
+    currentPercent = numConverter(currentValue[0] / totalCost[0] * 100);
     res.render('home', { page: 'Homepage', stocks: userHoldings, name, totalCost, totalValue, currentValue, currentPercent })
 }))
 
 
-app.get('/positions', requireLogin, catchAsync(async (req, res) => {
+//****************************************
+//*             PORTFOLIO PAGE           *
+//****************************************
+app.get('/portfolio', requireLogin, catchAsync(async (req, res) => {
     const user_id = req.session.user_id;
 
     const userHoldings = await Stock.find({ user: user_id });
@@ -201,24 +180,40 @@ app.get('/positions', requireLogin, catchAsync(async (req, res) => {
     for (let holding of userHoldings) {
         let compInfo = await obtainCompanyInfo(holding.ticker);
         holding.name = compInfo.name;
-        holding.lastPrice = twoDecimalPlace(compInfo.close);
+        holding.lastPrice = numConverter(compInfo.close);
         holding.stock_exchange = compInfo.stock_exchange;
-        holding.posValue = twoDecimalPlace(holding.lastPrice[0] * holding.quantity);
-        holding.unrealisedValue = twoDecimalPlace(parseFloat(holding.lastPrice[0]) - parseFloat(holding.price));
-        holding.unrealisedPercent = twoDecimalPlace(holding.unrealisedValue[0] / parseFloat(holding.price) * 100);
-        holding.unrealisedValue = twoDecimalPlace(holding.unrealisedValue[0] * holding.quantity);
+        holding.posValue = numConverter(holding.lastPrice[0] * holding.quantity);
+        holding.unrealisedValue = numConverter(parseFloat(holding.lastPrice[0]) - parseFloat(holding.price));
+        holding.unrealisedPercent = numConverter(holding.unrealisedValue[0] / parseFloat(holding.price) * 100);
+        holding.unrealisedValue = numConverter(holding.unrealisedValue[0] * holding.quantity);
 
         //calculte total cost of portfolio
         totalCost += parseFloat(holding.price) * holding.quantity;
         totalValue += parseFloat(holding.posValue[0]);
     }
 
-    console.log(totalValue[0]);
-    console.log(totalCost[0]);
-    currentValue = twoDecimalPlace(totalValue[0] - totalCost[0]);
-    currentPercent = twoDecimalPlace(currentValue[0] / totalCost[0] * 100);
 
-    res.render('positions', { page: 'Portfolio', stocks: userHoldings, totalCost, totalValue, currentValue, currentPercent })
+    //overall performance
+    totalValue = numConverter(totalValue);
+    totalCost = numConverter(totalCost);
+    currentValue = numConverter(totalValue[0] - totalCost[0]);
+    currentPercent = numConverter(currentValue[0] / totalCost[0] * 100);
+
+    res.render('portfolio', { page: 'Portfolio', stocks: userHoldings, totalCost, totalValue, currentValue, currentPercent })
+}))
+
+//****************************************
+//*            TRADES PAGE               *
+//****************************************
+app.get('/trades', requireLogin, catchAsync(async (req, res) => {
+    const user_id = req.session.user_id;
+    const trades = await Trade.find({ user: user_id });
+    for (let trade of trades) {
+        trade.buyprice = numConverter(trade.price)
+        trade.value = numConverter(trade.price * trade.quantity);
+    }
+
+    res.render('trades', { page: 'trades', trades })
 }))
 
 //****************************************
@@ -233,28 +228,30 @@ app.post('/buy', requireLogin, catchAsync(async (req, res) => {
     ticker = ticker.toUpperCase();
 
     //check if valid ticker
-    const response = await obtainMarketInfo(ticker);
-    // if (response.status !== 200) throw new AppError(response.statusText, response.status)
+    const response = await obtainCompanyInfo(ticker);
+    console.log(response);
+    console.log(response.data);
 
     const user = await User.findOne({ _id: req.session.user_id })
     const stock = await Stock.find({ user: user._id, ticker: ticker });
     if (stock.length) {
         let stockId = stock[0]._id;
         let newStockQuantity = stock[0].quantity + parseFloat(quantity, 10);
-        let newStockPrice = twoDecimalPlace(((stock[0].price * stock[0].quantity) + (price * quantity)) / newStockQuantity);
-        await Stock.updateOne({ _id: stockId }, { price: newStockPrice[0], quantity: newStockQuantity })
+        let newStockPrice = numConverter(((stock[0].price * stock[0].quantity) + (price * quantity)) / newStockQuantity);
+        let stockUpdate = await Stock.updateOne({ _id: stockId }, { price: newStockPrice[0], quantity: newStockQuantity })
     } else {
-        let newStockPrice = twoDecimalPlace(price);
+        let newStockPrice = numConverter(price);
         const newStock = new Stock({ ticker: ticker.toUpperCase(), price: newStockPrice[0], quantity: quantity })
         newStock.user = user;
         await newStock.save();
     }
-    const newTrade = new Trade({ ticker: ticker.toUpperCase(), price: price, quantity: quantity, transaction: 'Buy' })
+
+    const newTrade = new Trade({ date: getToday(), ticker: ticker.toUpperCase(), price: price, quantity: quantity, transaction: 'Buy' })
     newTrade.user = user;
     await newTrade.save()
 
-
-    res.redirect('/home')
+    req.flash('success', `Successfully added ${ticker}`);
+    res.redirect('/portfolio')
     // add buy alert
 }))
 
@@ -276,26 +273,72 @@ app.post('/sell', requireLogin, catchAsync(async (req, res, next) => {
         let stockId = stock[0]._id;
         let stockQuantity = stock[0].quantity;
         if (stockQuantity < parseFloat(quantity)) {
-            throw new AppError('you dont have so many stock to sell')
+            throw new AppError('You do not own that much stock.')
 
         } else if (stockQuantity === parseFloat(quantity)) {
-            const newTrade = new Trade({ ticker: ticker.toUpperCase(), price: price, quantity: quantity, transaction: 'Sell' })
+            const newTrade = new Trade({ date: getToday(), ticker: ticker.toUpperCase(), price: price, quantity: quantity, transaction: 'Sell' })
             newTrade.user = user;
             await newTrade.save()
             await Stock.deleteOne({ _id: stockId });
-            res.redirect('/home');
+            req.flash('success', `Successfully sold ${ticker}`);
+            res.redirect('/portfolio')
         } else {
-            const newTrade = new Trade({ ticker: ticker.toUpperCase(), price: price, quantity: quantity, transaction: 'Sell' })
+            const newTrade = new Trade({ date: getToday(), ticker: ticker.toUpperCase(), price: price, quantity: quantity, transaction: 'Sell' })
             newTrade.user = user;
             await newTrade.save()
             let newStockQuantity = stockQuantity - parseFloat(quantity, 10);
             await Stock.updateOne({ _id: stockId }, { quantity: newStockQuantity })
-            res.redirect('/home');
+            req.flash('success', `Successfully sold ${ticker}`);
+            res.redirect('/portfolio')
         }
     } else {
         throw new AppError('Stock does not exist')
     }
-    // // add buy alert
+}))
+
+
+//****************************************
+//*     TICKER SEARCH PAGE               *
+//****************************************
+app.get('/ticker/:ticker', requireLogin, catchAsync(async (req, res) => {
+    let ticker = req.params.ticker;
+    ticker = ticker.toUpperCase();
+
+    let companyInfo = await obtainCompanyInfo(ticker);
+
+    //check if user possess stock
+    const user_id = req.session.user_id;
+    let userStock = await Stock.findOne({ user: user_id, ticker: ticker });
+    if (!userStock) {
+        userStock = false;
+    } else {
+        userStock.totalCost = numConverter(userStock.quantity * userStock.price);
+        userStock.totalValue = numConverter(userStock.quantity * companyInfo.close);
+        userStock.unrealisedValue = numConverter(userStock.totalValue[0] - userStock.totalCost[0]);
+        userStock.unrealisedPercent = numConverter(userStock.unrealisedValue[0] / userStock.totalCost[0] * 100);
+    }
+
+    //check user trade history 
+    let userTrades = await Trade.find({ user: user_id, ticker: ticker });
+
+    if (!userTrades.length) {
+        userStock = false;
+    } else {
+
+        for (let trade of userTrades) {
+            trade.tradeValue = numConverter(trade.quantity * trade.price)
+            trade.buyPrice = numConverter(trade.price)
+        }
+    }
+
+    res.render('ticker', { page: `Ticker: ${ticker}`, companyInfo, userStock, userTrades })
+}))
+
+
+app.post('/ticker', requireLogin, catchAsync(async (req, res) => {
+    let { ticker } = req.body;
+    ticker = ticker.toUpperCase();
+    res.redirect(`/ticker/${ticker}`)
 }))
 
 //****************************************
@@ -306,33 +349,49 @@ app.get('/logout', requireLogin, (req, res) => {
     res.redirect('/');
 })
 
-//****************************************
-//*            SEARCH PAGE               *
-//****************************************
-app.get('/stockinfo', requireLogin, catchAsync(async (req, res) => {
-    let ticker = req.query.search;
-    ticker = ticker.toUpperCase();
 
-    let companyInfo = await obtainCompanyInfo(ticker);
 
-    //check if user possess stock
+
+app.get('/test2', requireLogin, catchAsync(async (req, res) => {
     const user_id = req.session.user_id;
-    console.log('thisisticker', ticker);
-    console.log(user_id)
-    let userStock = await Stock.find({ user: user_id, ticker: ticker });
-    if (!userStock.length) userStock = false;
+    let user = await User.findOne({ _id: user_id });
+    let name = user.name;
 
-    res.render('search', { page: 'search', companyInfo: companyInfo, userStock: userStock })
+    // const userHoldings = await Stock.find({ user: user_id });
+    const holdings = await Stock.retrievePortfolio(user_id);
+
+    console.log('thisisuserholdings', holdings);
+
+    //overall performance
+    let totalValue = numConverter(holdings.totalValue);
+    let totalCost = numConverter(holdings.totalCost);
+    let userHoldings = holdings.userHoldings;
+    currentValue = numConverter(totalValue[0] - totalCost[0]);
+    currentPercent = numConverter(currentValue[0] / totalCost[0] * 100);
+
+    //sort by top 5
+    userHoldings.sort((a, b) => b.posValue[0] - a.posValue[0])
+    userHoldings.splice(5)
+    res.render('home', { page: 'Homepage', stocks: userHoldings, name, totalCost, totalValue, currentValue, currentPercent })
 }))
+
+
+//****************************************
+//*         NOT FOUND ROUTE              *
+//****************************************
+app.use((req, res) => {
+    throw new AppError('Page not found', 404)
+})
 
 
 //****************************************
 //*            ERROR HANDLER             *
 //****************************************
 app.use((err, req, res, next) => {
-    console.log(err);
     const { status = 500, message = 'Something went wrong' } = err;
-    res.render('error', { status, message })
+    let previousURL = req.headers.referer;
+    console.dir(err);
+    res.render('error', { status, message, previousURL })
 })
 
 app.listen(3000, () => {
@@ -350,15 +409,12 @@ app.listen(3000, () => {
 //card to replace table at home page. -- or dropdown card aftr table
 // if name two separate words, split words
 
-//check jstock features and mimic: 
-// - click in for more stock info.
-//- chart with stock price
-// - your performance with the stock 
 
 
 //sort by in the portfolio table
-//  add in history of trades
+
+
 // pop up page for buy/sell instead of exact page.
 
 
-//black navbar - only expand search box when clicked
+// delete test page

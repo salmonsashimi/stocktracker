@@ -1,14 +1,26 @@
 <%- include('partials/header', {page: status}) %>
 
 
+    <div class="container mt-5 d-flex justify-content-center">
 
-    <h1>error!!!!</h1>
-    <h1>
-        <%-status %>
-    </h1>
-    <h1>
-        <%-message %>
-    </h1>
-    </body>
 
-    </html>
+        <div class="card text-dark bg-light mb-3 flex-fill" style="max-width: 25rem;">
+            <div class="card-header">
+                <h5 class="card-title">
+
+                    Error: <%-status %>
+                </h5>
+            </div>
+            <div class="card-body">
+
+                <p class="card-text">
+                    <%-message %>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class='container mt-3 d-flex justify-content-center'>
+        <a href="<%-previousURL%>" class="btn btn-outline-dark">Go back</a>
+    </div>
+
+    <%- include('partials/footer') %>

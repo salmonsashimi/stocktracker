@@ -5,8 +5,8 @@ const User = require('./User')
 
 const tradeSchema = new Schema({
     date: {
-        type: Date,
-        // required: true
+        type: String,
+        required: true
     },
     transaction: {
         type: String,

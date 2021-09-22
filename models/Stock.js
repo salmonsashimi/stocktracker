@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-const User = require('./User')
+const User = require('./User');
+const numConverter = require('../utils/numConverter');
+const obtainCompanyInfo = require('../utils/obtainCompanyInfo');
+
 
 
 const stockSchema = new Schema({
@@ -25,4 +28,40 @@ const stockSchema = new Schema({
     }
 })
 
+stockSchema.statics.convertNum = async function (num) {
+    let info = await obtainCompanyInfo('adsfaf')
+    console.log(info)
+};
+
+stockSchema.statics.retrievePortfolio = async function (userId) {
+    console.log('running retrievePortfolio')
+    const userHoldings = await this.find({ user: userId });
+
+    let totalCost = 0;
+    let totalValue = 0;
+
+
+    //obtain individual stock info
+    for (let holding of userHoldings) {
+        let compInfo = await obtainCompanyInfo(holding.ticker);
+        holding.name = compInfo.name;
+        holding.lastPrice = numConverter(compInfo.close);
+        holding.stock_exchange = compInfo.stock_exchange;
+        holding.posValue = numConverter(holding.lastPrice[0] * holding.quantity);
+        holding.unrealisedValue = numConverter(parseFloat(holding.lastPrice[0]) - parseFloat(holding.price));
+        holding.unrealisedPercent = numConverter(holding.unrealisedValue[0] / parseFloat(holding.price) * 100);
+        holding.unrealisedValue = numConverter(holding.unrealisedValue[0] * holding.quantity);
+
+        //calculte total cost of portfolio
+        totalCost += parseFloat(holding.price) * holding.quantity;
+        totalValue += parseFloat(holding.posValue[0]);
+    }
+
+    holdings = {
+        userHoldings: userHoldings,
+        totalValue: totalValue,
+        totalCost: totalCost
+    }
+    return holdings;
+};
 module.exports = mongoose.model('Stock', stockSchema);

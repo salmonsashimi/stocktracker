@@ -1,22 +1,58 @@
 <%- include('partials/header', {page: 'test' }) %>
 
+    <div class="container">
+        <div class='container p-4 mt-4 px-5 text-center bg-light'>
 
-    <div class='container pt-5 text-center w-75'>
-        <h1>Overall Performance</h1>
-        <h1>
-            total profit: the profit or loss number here
-        </h1>
-        <div class='row'>
-            <div class="col-2">
-                <h3>value</h3>
+            <h2 class='fw-light'>Overall Performance</h2>
+            <div class='row'>
+                <div class="col-2 row row-cols-1 align-items-center bg-light">
+                    <div class="col">
+                        <h3 class='fw-lighter'>Return</h3>
+                    </div>
+                    <div class="col">
+                        <h3 class='fw-lighter'>Cost</h3>
+                    </div>
+                </div>
+                <div class="graph col-8">
+
+
+                    <div id="return">
+                    </div>
+                    <div id="cost">
+                    </div>
+
+                    <div id='returnBlocker' class='bg-light'></div>
+                    <div id='costBlocker' class='bg-light'></div>
+
+
+
+
+
+                </div>
+                <div class="col-2 row row-cols-1 align-items-center bg-light">
+                    <div class="col">
+                        <h3 class='fw-lighter'>
+                            <%- values[0]%>
+                        </h3>
+                    </div>
+                    <div class="col">
+                        <h3 class='fw-lighter'>
+                            <%- values[1]%>
+                        </h3>
+                    </div>
+                </div>
+                <div>
+                    <h5 class='fw-light'>Current Yield</h5>
+
+                    </h3>
+                </div>
             </div>
-            <div class="col-10">
-                <canvas id="myChart" width="876" height="219"></canvas>
-            </div>
+
+
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="chart.js" cost='<%=totalCost%>' value='<%=totalValue %>' charset='utf-8'></script>
-    </body>
+
+    <script type='text/javascript' src='test.js' return=''></script>
+
 
     </html>

@@ -1,11 +1,6 @@
 let value = document.currentScript.getAttribute('value');
 let cost = document.currentScript.getAttribute('cost');
 
-console.log(value);
-console.log(cost);
-
-
-
 const data = {
     labels: ['Value', 'Cost'],
     datasets: [{
@@ -54,4 +49,3 @@ var myChart = new Chart(
     document.getElementById('myChart'),
     config
 );
-console.log('hello from charts')

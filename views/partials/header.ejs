@@ -8,8 +8,9 @@
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.7/css/all.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
-    <link rel="stylesheet" href="styles.css">
-    <link rel="icon" href="public/icon.ico">
+    <link rel="stylesheet" type="text/css" href="/styles.css">
+    <link rel="icon" href="/icon.ico">
+
 
     <title>
         stocktracker: <%- page %>
@@ -19,33 +20,35 @@
 
 <body>
     <% if (page!=='Login' ) { %>
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <div class="container">
+        <nav class="navbar navbar-expand-lg navbar-light bg-dark sticky-top">
+            <div class="container px-5">
 
-                <a class="navbar-brand fst-italic fw-bold fs-4 p-0" href="/home">stocktracker</a>
+                <a class="navbar-brand fst-italic fw-bold fs-4 p-0 text-white" href="/home">stocktracker</a>
 
-
-
-
-                <form action='/stockinfo' method='GET' class="d-flex ms-auto pe-3">
+                <form action='/ticker' method='POST' class="d-flex ms-auto pe-3">
                     <div class="input-group">
-                        <input class="form-control border border-dark" type="search" placeholder="Search Ticker"
-                            name='search' aria-describedby="button-addon2">
-                        <button class="btn btn-outline-dark" type="submit" id="button-addon2"><i
+                        <input class="form-control border border-light" type="search" placeholder="Search Ticker"
+                            name='ticker' aria-describedby="button-addon2" required>
+                        <button class="btn btn-outline-light text-white" type="submit" id="button-addon2"><i
                                 class="fas fa-search"></i>
-
-
                         </button>
                     </div>
-
-
-
-
-
                 </form>
                 <ul class="navbar-nav d-flex mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="btn btn-outline-dark" href="/logout">Logout</a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-white" href="#" id="navbarDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user"></i>
+
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="/portfolio">Portfolio</a></li>
+                            <li><a class="dropdown-item" href="/trades">Trade History</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                        </ul>
                     </li>
                 </ul>
                 <% } %>
