@@ -15,6 +15,7 @@ const bcrypt = require('bcrypt');
 const session = require('express-session');
 const mongoose = require('mongoose');
 const flash = require('connect-flash');
+const { listeners } = require('process');
 const User = require(__dirname + '/models/User');
 const Stock = require(__dirname + '/models/Stock');
 const Trade = require(__dirname + '/models/Trade');
@@ -67,7 +68,6 @@ const getToday = () => {
 
 app.get('/test', (req, res) => {
     values = [1000, 2000];
-    Stock.convertNum(123);
 
     console.log(new Date().toLocaleDateString('en-GB'));
 
@@ -84,7 +84,7 @@ app.get('/', (req, res) => {
 })
 
 
-app.post('/login', catchAsync(async (req, res, next) => {
+app.post('/login', catchAsync(async (req, res) => {
     let userLogin = req.body;
     const storedUserInfo = await User.find({ email: userLogin.email });
     if (!storedUserInfo.length) {
@@ -132,37 +132,24 @@ app.get('/home', requireLogin, catchAsync(async (req, res) => {
     let user = await User.findOne({ _id: user_id });
     let name = user.name;
 
-    const userHoldings = await Stock.find({ user: user_id });
-    let totalCost = 0;
-    let totalValue = 0;
+    let portfolio = await Stock.retrievePortfolio(user_id);
 
-
-    //obtain individual stock info
-    for (let holding of userHoldings) {
-        let compInfo = await obtainCompanyInfo(holding.ticker);
-        holding.name = compInfo.name;
-        holding.lastPrice = numConverter(compInfo.close);
-        holding.stock_exchange = compInfo.stock_exchange;
-        holding.posValue = numConverter(holding.lastPrice[0] * holding.quantity);
-        holding.unrealisedValue = numConverter(parseFloat(holding.lastPrice[0]) - parseFloat(holding.price));
-        holding.unrealisedPercent = numConverter(holding.unrealisedValue[0] / parseFloat(holding.price) * 100);
-        holding.unrealisedValue = numConverter(holding.unrealisedValue[0] * holding.quantity);
-
-        //calculte total cost of portfolio
-        totalCost += parseFloat(holding.price) * holding.quantity;
-        totalValue += parseFloat(holding.posValue[0]);
-    }
+    console.log('this is user portfolio', portfolio);
+    let { userHoldings, totalValue, totalCost, currentValue, currentPercent } = portfolio;
 
     //sort by top 5
-    userHoldings.sort((a, b) => b.posValue[0] - a.posValue[0])
-    userHoldings.splice(5)
+    userHoldings.sort((a, b) => b.posValue[0] - a.posValue[0]);
+    userHoldings.splice(5);
 
-    //overall performance
-    totalValue = numConverter(totalValue);
-    totalCost = numConverter(totalCost);
-    currentValue = numConverter(totalValue[0] - totalCost[0]);
-    currentPercent = numConverter(currentValue[0] / totalCost[0] * 100);
-    res.render('home', { page: 'Homepage', stocks: userHoldings, name, totalCost, totalValue, currentValue, currentPercent })
+    portfolio = {
+        userHoldings: userHoldings,
+        totalValue: totalValue,
+        totalCost: totalCost,
+        currentValue: currentValue,
+        currentPercent: currentPercent
+
+    }
+    res.render('home', { page: 'Homepage', name, portfolio });
 }))
 
 
@@ -172,34 +159,8 @@ app.get('/home', requireLogin, catchAsync(async (req, res) => {
 app.get('/portfolio', requireLogin, catchAsync(async (req, res) => {
     const user_id = req.session.user_id;
 
-    const userHoldings = await Stock.find({ user: user_id });
-    let totalCost = 0;
-    let totalValue = 0;
-
-    //obtain individual stock info
-    for (let holding of userHoldings) {
-        let compInfo = await obtainCompanyInfo(holding.ticker);
-        holding.name = compInfo.name;
-        holding.lastPrice = numConverter(compInfo.close);
-        holding.stock_exchange = compInfo.stock_exchange;
-        holding.posValue = numConverter(holding.lastPrice[0] * holding.quantity);
-        holding.unrealisedValue = numConverter(parseFloat(holding.lastPrice[0]) - parseFloat(holding.price));
-        holding.unrealisedPercent = numConverter(holding.unrealisedValue[0] / parseFloat(holding.price) * 100);
-        holding.unrealisedValue = numConverter(holding.unrealisedValue[0] * holding.quantity);
-
-        //calculte total cost of portfolio
-        totalCost += parseFloat(holding.price) * holding.quantity;
-        totalValue += parseFloat(holding.posValue[0]);
-    }
-
-
-    //overall performance
-    totalValue = numConverter(totalValue);
-    totalCost = numConverter(totalCost);
-    currentValue = numConverter(totalValue[0] - totalCost[0]);
-    currentPercent = numConverter(currentValue[0] / totalCost[0] * 100);
-
-    res.render('portfolio', { page: 'Portfolio', stocks: userHoldings, totalCost, totalValue, currentValue, currentPercent })
+    let portfolio = await Stock.retrievePortfolio(user_id);
+    res.render('portfolio', { page: 'Portfolio', portfolio })
 }))
 
 //****************************************
@@ -350,30 +311,6 @@ app.get('/logout', requireLogin, (req, res) => {
 })
 
 
-
-
-app.get('/test2', requireLogin, catchAsync(async (req, res) => {
-    const user_id = req.session.user_id;
-    let user = await User.findOne({ _id: user_id });
-    let name = user.name;
-
-    // const userHoldings = await Stock.find({ user: user_id });
-    const holdings = await Stock.retrievePortfolio(user_id);
-
-    console.log('thisisuserholdings', holdings);
-
-    //overall performance
-    let totalValue = numConverter(holdings.totalValue);
-    let totalCost = numConverter(holdings.totalCost);
-    let userHoldings = holdings.userHoldings;
-    currentValue = numConverter(totalValue[0] - totalCost[0]);
-    currentPercent = numConverter(currentValue[0] / totalCost[0] * 100);
-
-    //sort by top 5
-    userHoldings.sort((a, b) => b.posValue[0] - a.posValue[0])
-    userHoldings.splice(5)
-    res.render('home', { page: 'Homepage', stocks: userHoldings, name, totalCost, totalValue, currentValue, currentPercent })
-}))
 
 
 //****************************************

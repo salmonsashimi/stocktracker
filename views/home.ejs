@@ -5,7 +5,7 @@
     <div class="container text-center px-5 m-5">
         <h1 class='fw-light'>Hello, <%- name %>.</h1>
 
-        <% if (stocks.length) { %>
+        <% if (portfolio.userHoldings.length) { %>
             <div class='container p-4 mt-4 px-5 text-center bg-light'>
 
                 <h2 class='fw-light overall'>Overall Performance</h2>
@@ -24,19 +24,19 @@
                     <div class="col-2 row row-cols-1 align-items-center">
                         <div class="col">
                             <h3 class='fw-lighter'>
-                                $<%- totalValue[1]%>
+                                $<%- portfolio.totalValue[1]%>
                             </h3>
                         </div>
                         <div class="col">
                             <h3 class='fw-lighter'>
-                                $<%- totalCost[1]%>
+                                $<%- portfolio.totalCost[1]%>
                             </h3>
                         </div>
                     </div>
                     <div>
                         <h5 class='fw-light'>Current Yield</h5>
-                        <h3 class='fw-light <%=(currentValue[0] < 0) ? ' text-danger' : 'text-success' %>'>$
-                            <%-currentValue[1]%>, (<%-currentPercent[1]%>%)
+                        <h3 class='fw-light <%=(portfolio.currentValue[0] < 0) ? ' text-danger' : 'text-success' %>'>$
+                            <%-portfolio.currentValue[1]%>, (<%-portfolio.currentPercent[1]%>%)
                         </h3>
                     </div>
                 </div>
@@ -67,11 +67,11 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <% for (let stock of stocks) { %>
+                        <% for (let stock of portfolio.userHoldings) { %>
                             <tr onclick="linkTo('<%-stock.ticker%>')">
-                                <th scope="row">
+                                <td scope="row">
                                     <%- stock.ticker %>
-                                </th>
+                                </td>
                                 <td>
                                     <%- stock.quantity %>
                                 </td>
@@ -109,8 +109,8 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script type='text/javascript' src="chart.js" cost='<%=totalCost[0]%>' value='<%=totalValue[0]%>'
-        charset='utf-8'></script>
+    <script type='text/javascript' src="chart.js" cost='<%=portfolio.totalCost[0]%>'
+        value='<%=portfolio.totalValue[0]%>' charset='utf-8'></script>
     <script type='text/javascript' src="table.js"></script>
 
 

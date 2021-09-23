@@ -28,19 +28,11 @@ const stockSchema = new Schema({
     }
 })
 
-stockSchema.statics.convertNum = async function (num) {
-    let info = await obtainCompanyInfo('adsfaf')
-    console.log(info)
-};
-
 stockSchema.statics.retrievePortfolio = async function (userId) {
     console.log('running retrievePortfolio')
     const userHoldings = await this.find({ user: userId });
-
     let totalCost = 0;
     let totalValue = 0;
-
-
     //obtain individual stock info
     for (let holding of userHoldings) {
         let compInfo = await obtainCompanyInfo(holding.ticker);
@@ -57,11 +49,18 @@ stockSchema.statics.retrievePortfolio = async function (userId) {
         totalValue += parseFloat(holding.posValue[0]);
     }
 
+    totalCost = numConverter(totalCost);
+    totalValue = numConverter(totalValue);
+    currentValue = numConverter(totalValue[0] - totalCost[0]);
+    currentPercent = numConverter(currentValue[0] / totalCost[0] * 100);
     holdings = {
         userHoldings: userHoldings,
         totalValue: totalValue,
-        totalCost: totalCost
+        totalCost: totalCost,
+        currentValue: currentValue,
+        currentPercent: currentPercent
     }
+
     return holdings;
 };
 module.exports = mongoose.model('Stock', stockSchema);
