@@ -1,58 +1,40 @@
-<%- include('partials/header', {page: 'test' }) %>
+<%- include('partials/header', {page: 'Login' }) %>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">Navbar</a>
 
-    <div class="container">
-        <div class='container p-4 mt-4 px-5 text-center bg-light'>
-
-            <h2 class='fw-light'>Overall Performance</h2>
-            <div class='row'>
-                <div class="col-2 row row-cols-1 align-items-center bg-light">
-                    <div class="col">
-                        <h3 class='fw-lighter'>Return</h3>
-                    </div>
-                    <div class="col">
-                        <h3 class='fw-lighter'>Cost</h3>
-                    </div>
-                </div>
-                <div class="graph col-8">
-
-
-                    <div id="return">
-                    </div>
-                    <div id="cost">
-                    </div>
-
-                    <div id='returnBlocker' class='bg-light'></div>
-                    <div id='costBlocker' class='bg-light'></div>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
 
 
 
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
-
-                </div>
-                <div class="col-2 row row-cols-1 align-items-center bg-light">
-                    <div class="col">
-                        <h3 class='fw-lighter'>
-                            <%- values[0]%>
-                        </h3>
-                    </div>
-                    <div class="col">
-                        <h3 class='fw-lighter'>
-                            <%- values[1]%>
-                        </h3>
-                    </div>
-                </div>
-                <div>
-                    <h5 class='fw-light'>Current Yield</h5>
-
-                    </h3>
-                </div>
-            </div>
-
-
-        </div>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Link</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown"
+              aria-expanded="false">
+              Dropdown
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <li><a class="dropdown-item" href="#">Action</a></li>
+              <li><a class="dropdown-item" href="#">Another action</a></li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              <li><a class="dropdown-item" href="#">Something else here</a></li>
+            </ul>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
+          </li>
+        </ul>
+        <form class="d-flex">
+          <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+          <button class="btn btn-outline-success" type="submit">Search</button>
+        </form>
+      </div>
     </div>
-
-    <script type='text/javascript' src='test.js' return=''></script>
-
-
-    </html>
+  </nav>
+  <%- include('partials/footer') %>

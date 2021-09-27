@@ -3,9 +3,16 @@
 // **** USE gitignore to ignore the .env file. 
 // -	Can just google gitignore template from github and copy paste
 // -	Atom will show files greyed out ---- shows that the files will not be committed. 
+//delete styles.css if not in use 
 
 
 // **when deploying app on server, look for config vars and see how to set them up. 
+
+
+// add responsive table layouts, for the tbales to wider width when in smaller screen. 
+// consolidate all padding to first container div. 
+
+//remove all white space in all files
 
 const express = require('express');
 const app = express();
@@ -53,34 +60,25 @@ mongoose.connect('mongodb://localhost:27017/stocktracker', {
 //middleware 
 const requireLogin = (req, res, next) => {
     if (!req.session.user_id) {
-        return res.redirect('/')
+        return res.redirect('/');
     }
     next();
 }
 
-
-
 const getToday = () => {
-    let date = new Date()
+    let date = new Date();
     return date.toLocaleDateString('en-GB');
 }
 
-
 app.get('/test', (req, res) => {
-    values = [1000, 2000];
-
-    console.log(new Date().toLocaleDateString('en-GB'));
-
-    res.render('test', { values })
-
+    res.render('test');
 })
-
 
 //****************************************
 //*           LOGIN/REGISTER PAGE        *
 //****************************************
 app.get('/', (req, res) => {
-    res.render('login', { page: 'Login' })
+    res.render('login', { page: 'Login' });
 })
 
 
@@ -117,10 +115,10 @@ app.post('/register', catchAsync(async (req, res) => {
         name: name,
         email: email,
         password: hashedPassword
-    })
-    req.session.user_id = newUser._id
-    await newUser.save()
-    res.redirect('/home')
+    });
+    req.session.user_id = newUser._id;
+    await newUser.save();
+    res.redirect('/home');
 }))
 
 
@@ -133,8 +131,6 @@ app.get('/home', requireLogin, catchAsync(async (req, res) => {
     let name = user.name;
 
     let portfolio = await Stock.retrievePortfolio(user_id);
-
-    console.log('this is user portfolio', portfolio);
     let { userHoldings, totalValue, totalCost, currentValue, currentPercent } = portfolio;
 
     //sort by top 5
@@ -147,7 +143,6 @@ app.get('/home', requireLogin, catchAsync(async (req, res) => {
         totalCost: totalCost,
         currentValue: currentValue,
         currentPercent: currentPercent
-
     }
     res.render('home', { page: 'Homepage', name, portfolio });
 }))
@@ -158,7 +153,6 @@ app.get('/home', requireLogin, catchAsync(async (req, res) => {
 //****************************************
 app.get('/portfolio', requireLogin, catchAsync(async (req, res) => {
     const user_id = req.session.user_id;
-
     let portfolio = await Stock.retrievePortfolio(user_id);
     res.render('portfolio', { page: 'Portfolio', portfolio })
 }))
@@ -173,7 +167,6 @@ app.get('/trades', requireLogin, catchAsync(async (req, res) => {
         trade.buyprice = numConverter(trade.price)
         trade.value = numConverter(trade.price * trade.quantity);
     }
-
     res.render('trades', { page: 'trades', trades })
 }))
 
@@ -190,10 +183,8 @@ app.post('/buy', requireLogin, catchAsync(async (req, res) => {
 
     //check if valid ticker
     const response = await obtainCompanyInfo(ticker);
-    console.log(response);
-    console.log(response.data);
 
-    const user = await User.findOne({ _id: req.session.user_id })
+    const user = await User.findOne({ _id: req.session.user_id });
     const stock = await Stock.find({ user: user._id, ticker: ticker });
     if (stock.length) {
         let stockId = stock[0]._id;
@@ -209,11 +200,10 @@ app.post('/buy', requireLogin, catchAsync(async (req, res) => {
 
     const newTrade = new Trade({ date: getToday(), ticker: ticker.toUpperCase(), price: price, quantity: quantity, transaction: 'Buy' })
     newTrade.user = user;
-    await newTrade.save()
+    await newTrade.save();
 
     req.flash('success', `Successfully added ${ticker}`);
-    res.redirect('/portfolio')
-    // add buy alert
+    res.redirect('/portfolio');
 }))
 
 
@@ -223,37 +213,31 @@ app.post('/buy', requireLogin, catchAsync(async (req, res) => {
 app.get('/sell', requireLogin, catchAsync(async (req, res) => {
     const user_id = req.session.user_id;
     const userHoldings = await Stock.find({ user: user_id });
-    res.render('sell', { page: 'Sell Stock', stocks: userHoldings })
+    res.render('sell', { page: 'Sell Stock', stocks: userHoldings });
 }))
 
 app.post('/sell', requireLogin, catchAsync(async (req, res, next) => {
     const { ticker, price, quantity } = req.body;
-    const user = await User.findOne({ _id: req.session.user_id })
+    const user = await User.findOne({ _id: req.session.user_id });
     const stock = await Stock.find({ user: user, ticker: ticker });
     if (stock.length) {
         let stockId = stock[0]._id;
         let stockQuantity = stock[0].quantity;
         if (stockQuantity < parseFloat(quantity)) {
-            throw new AppError('You do not own that much stock.')
-
+            throw new AppError(`You do not own enough ${ticker} stock.`);
         } else if (stockQuantity === parseFloat(quantity)) {
-            const newTrade = new Trade({ date: getToday(), ticker: ticker.toUpperCase(), price: price, quantity: quantity, transaction: 'Sell' })
-            newTrade.user = user;
-            await newTrade.save()
             await Stock.deleteOne({ _id: stockId });
-            req.flash('success', `Successfully sold ${ticker}`);
-            res.redirect('/portfolio')
         } else {
-            const newTrade = new Trade({ date: getToday(), ticker: ticker.toUpperCase(), price: price, quantity: quantity, transaction: 'Sell' })
-            newTrade.user = user;
-            await newTrade.save()
             let newStockQuantity = stockQuantity - parseFloat(quantity, 10);
-            await Stock.updateOne({ _id: stockId }, { quantity: newStockQuantity })
-            req.flash('success', `Successfully sold ${ticker}`);
-            res.redirect('/portfolio')
+            await Stock.updateOne({ _id: stockId }, { quantity: newStockQuantity });
         }
+        const newTrade = new Trade({ date: getToday(), ticker: ticker.toUpperCase(), price: price, quantity: quantity, transaction: 'Sell' })
+        newTrade.user = user;
+        await newTrade.save();
+        req.flash('success', `Successfully sold ${ticker}`);
+        res.redirect('/portfolio');
     } else {
-        throw new AppError('Stock does not exist')
+        throw new AppError('Stock does not exist');
     }
 }))
 
@@ -281,17 +265,14 @@ app.get('/ticker/:ticker', requireLogin, catchAsync(async (req, res) => {
 
     //check user trade history 
     let userTrades = await Trade.find({ user: user_id, ticker: ticker });
-
     if (!userTrades.length) {
         userStock = false;
     } else {
-
         for (let trade of userTrades) {
             trade.tradeValue = numConverter(trade.quantity * trade.price)
             trade.buyPrice = numConverter(trade.price)
         }
     }
-
     res.render('ticker', { page: `Ticker: ${ticker}`, companyInfo, userStock, userTrades })
 }))
 
@@ -310,16 +291,12 @@ app.get('/logout', requireLogin, (req, res) => {
     res.redirect('/');
 })
 
-
-
-
 //****************************************
-//*         NOT FOUND ROUTE              *
+//*         ROUTE NOT FOUND              *
 //****************************************
 app.use((req, res) => {
-    throw new AppError('Page not found', 404)
+    throw new AppError('Page not found', 404);
 })
-
 
 //****************************************
 //*            ERROR HANDLER             *
@@ -327,31 +304,10 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
     const { status = 500, message = 'Something went wrong' } = err;
     let previousURL = req.headers.referer;
-    console.dir(err);
-    res.render('error', { status, message, previousURL })
+    console.log(err);
+    res.render('error', { status, message, previousURL });
 })
 
 app.listen(3000, () => {
-    console.log('running on port 3000')
+    console.log('running on port 3000');
 })
-
-
-
-
-
-
-// to do:
-// error page
-
-//card to replace table at home page. -- or dropdown card aftr table
-// if name two separate words, split words
-
-
-
-//sort by in the portfolio table
-
-
-// pop up page for buy/sell instead of exact page.
-
-
-// delete test page

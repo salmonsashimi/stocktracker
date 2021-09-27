@@ -29,7 +29,6 @@ const stockSchema = new Schema({
 })
 
 stockSchema.statics.retrievePortfolio = async function (userId) {
-    console.log('running retrievePortfolio')
     const userHoldings = await this.find({ user: userId });
     let totalCost = 0;
     let totalValue = 0;
@@ -60,7 +59,6 @@ stockSchema.statics.retrievePortfolio = async function (userId) {
         currentValue: currentValue,
         currentPercent: currentPercent
     }
-
     return holdings;
 };
 module.exports = mongoose.model('Stock', stockSchema);

@@ -30,6 +30,7 @@ const obtainCompanyInfo = async function (ticker) {
     console.log('running obtaincompanyinfo with ' + ticker);
     let marketInfo = await obtainMarketInfo(ticker);
     let companyName = await obtainCompanyName(ticker);
+    console.log(companyName)
     let { name, symbol, stock_exchange } = companyName.data;
     let { close } = marketInfo.data.data[0];
     let companyInfo = {

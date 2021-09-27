@@ -8,19 +8,19 @@
             <div class="card-header">
                 <h5 class="card-title">
 
-                    Error: <%-status %>
+                    Error: <%=status %>
                 </h5>
             </div>
             <div class="card-body">
 
                 <p class="card-text">
-                    <%-message %>
+                    <%=message %>
                 </p>
             </div>
         </div>
     </div>
     <div class='container mt-3 d-flex justify-content-center'>
-        <a href="<%-previousURL%>" class="btn btn-outline-dark">Go back</a>
+        <a href="<%=previousURL%>" class="btn btn-outline-dark">Go back</a>
     </div>
 
     <%- include('partials/footer') %>

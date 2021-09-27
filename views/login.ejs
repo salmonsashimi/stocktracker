@@ -3,12 +3,12 @@
         <div class="container mt-5 pt-3 text-center">
             <!-- <h1 class="fst-italic fw-bold pb-5" href="/">stocktracker</h1> -->
 
-            <div class="card w-25 mx-auto mt-5  border border-dark">
+            <div class="card mx-auto mt-5 border border-dark" style="width: 20rem;">
                 <div class="card-header p-0 border-bottom-0">
                     <div class="btn-group w-100 row" role="group">
-                        <a class="btn btn-outline-dark active col-6 border-0" data-bs-toggle="button" id='loginButton'
+                        <a class="btn btn-outline-dark active col-6 border-0" data-bs-toggle="button" id='loginTab'
                             onclick="switchLogin()">Login</a>
-                        <a class="btn btn-outline-dark col-6 border-0" data-bs-toggle="button" id='registerButton'
+                        <a class="btn btn-outline-dark col-6 border-0" data-bs-toggle="button" id='registerTab'
                             onclick='switchRegister()'>Register</a>
                     </div>
                 </div>
@@ -56,7 +56,7 @@
 
                             </div>
                             <div class="d-grid gap-2 mt-3">
-                                <button class="btn btn-dark" type="submit">Register</button>
+                                <button id='registerButton' class="btn btn-dark" type="submit">Register</button>
                             </div>
                         </form>
                     </div>

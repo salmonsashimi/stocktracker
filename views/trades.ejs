@@ -1,81 +1,65 @@
 <%- include('partials/header', {page: page}) %>
 
-
-
-    <div class="container text-center px-5 mx-5">
-
+    <div class="container text-center px-md-5 my-5">
         <% if (trades.length) { %>
+            <div class='container table-responsive border border-secondary'>
+                <div>
+                    <h2 class='mt-3 fw-light'>Trade History</h2>
+                </div>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Date</th>
+                            <th scope="col">Ticker</th>
+                            <th scope="col">Buy/Sell</th>
+                            <th scope="col">Quantity</th>
+                            <th scope="col">Price</th>
+                            <th scope="col">Position Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% for (let trade of trades) { %>
+                            <tr onclick="linkTo('<%-trade.ticker%>')">
+                                <td scope="row">
+                                    <%- trade.date %>
+                                </td>
+                                <td>
+                                    <%- trade.ticker %>
+                                </td>
+                                <td>
+                                    <%- trade.transaction %>
 
-            <div class="container">
-                <div class='container border border-secondary mt-5'>
-                    <div>
-                        <h2 class='mt-3 fw-light'>Trade History</h2>
-                    </div>
-
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th scope="col">Date</th>
-                                <th scope="col">Ticker</th>
-                                <th scope="col">Buy/Sell</th>
-                                <th scope="col">Quantity</th>
-                                <th scope="col">Price</th>
-                                <th scope="col">Position Value</th>
+                                </td>
+                                <td>
+                                    <%- trade.quantity %>
+                                </td>
+                                <td>
+                                    $<%- trade.buyprice[1] %>
+                                </td>
+                                <td>
+                                    $<%- trade.value[1] %>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            <% for (let trade of trades) { %>
-                                <tr onclick="linkTo('<%-trade.ticker%>')">
-                                    <td scope="row">
-                                        <%- trade.date %>
-                                    </td>
-                                    <td>
-                                        <%- trade.ticker %>
-                                    </td>
-                                    <td>
-                                        <%- trade.transaction %>
-
-                                    </td>
-                                    <td>
-                                        <%- trade.quantity %>
-                                    </td>
-                                    <td>
-                                        $<%- trade.buyprice[1] %>
-                                    </td>
-                                    <td>
-                                        $<%- trade.value[1] %>
-                                    </td>
-
-
-                                </tr>
-                                <% } %>
-
-
-                        </tbody>
-                    </table>
-                </div>
-                <div class='mb-3 mt-3'>
-                    <div class='btn-group' role="group">
-                        <a class="btn btn-sm btn-outline-dark" href='/buy'>+</a>
-                        <a class="btn btn-sm btn-outline-dark" href='/sell'>-</a>
-                    </div>
-                </div>
-                <% } else { %>
-                    <div class='mt-5'>
-                        <h3>You do not own any stocks.</h3>
-                        <a class="btn btn-outline-dark" href='/buy'>Add a stock</a>
-                    </div>
-                    <% } %>
-
-
+                            <% } %>
+                    </tbody>
+                </table>
             </div>
+            <div class='mb-3 mt-3'>
+                <div class='btn-group' role="group">
+                    <a class="btn btn-sm btn-outline-dark" href='/buy'>+</a>
+                    <a class="btn btn-sm btn-outline-dark" href='/sell'>-</a>
+                </div>
+            </div>
+            <% } else { %>
+                <div class='mt-5'>
+                    <h3>You do not own any stocks.</h3>
+                    <a class="btn btn-outline-dark" href='/buy'>Add a stock</a>
+                </div>
+                <% } %>
+
     </div>
-
-
     <% if (trades.length) { %>
         <script type='text/javascript' src="table.js"></script>
-
         <%}%>
-
 
             <%- include('partials/footer') %>

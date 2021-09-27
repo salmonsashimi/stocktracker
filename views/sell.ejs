@@ -1,14 +1,11 @@
 <%- include('partials/header', {page: page}) %>
 
-
-    <div class="container mt-5 w-25 text-center border border-dark border-3">
+    <div class="container mt-5 text-center border border-dark border-3" style="width: 20rem;">
         <h3 class='mt-5 fw-bold'>Sell Stock</h3>
         <form action='/sell' method='POST' class='mt-5'>
             <div class="row mb-2">
-                <label for="ticker" class="col-sm-4 col-form-label fw-bold">Ticker:</label>
-
-                <div class="col-sm-8">
-
+                <label for="ticker" class="col-4 col-form-label fw-bold">Ticker:</label>
+                <div class="col-8">
                     <div class="form-group">
                         <select class="form-control" name='ticker' id='ticker' required>
                             <option disabled default>Select Stock</option>
@@ -18,25 +15,19 @@
                                 </option>
                                 <% } %>
                         </select>
-
                     </div>
-
                 </div>
             </div>
-
             <div class="row mb-2">
-                <label for="quantity" class="col-sm-4 col-form-label fw-bold">Quantity:</label>
-                <div class="col-sm-8">
-
-                    <input type="number" class="form-control" placeholder="eg. 1" name='quantity' id='quantity' min=0
+                <label for="quantity" class="col-4 col-form-label fw-bold">Quantity:</label>
+                <div class="col-8">
+                    <input type="number" class="form-control" placeholder="eg. 10" name='quantity' id='quantity' min=0
                         required>
                 </div>
             </div>
-
             <div class="row mb-2">
-                <label for="quantity" class="col-sm-4 col-form-label fw-bold">Sell Price:</label>
-                <div class="col-sm-8">
-
+                <label for="quantity" class="col-4 col-form-label fw-bold">Sell Price:</label>
+                <div class="col-8">
                     <div class="input-group">
                         <div class="input-group-prepend">
                             <div class="input-group-text">$</div>
@@ -45,8 +36,7 @@
                     </div>
                 </div>
             </div>
-
-            <button type="submit" class="btn btn-primary mb-3">Submit</button>
+            <button type="submit" class="btn btn-primary mt-2 mb-5">Submit</button>
         </form>
     </div>
 

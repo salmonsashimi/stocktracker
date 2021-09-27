@@ -1,16 +1,14 @@
 <%- include('partials/header', {page: page}) %>
 
-
-
-    <div class="container text-center px-5 m-5">
-        <h1 class='fw-light'>Hello, <%- name %>.</h1>
+    <div class="container text-center px-md-5 my-5">
+        <h1 class='fw-light'>Hello, <%= name %>.</h1>
 
         <% if (portfolio.userHoldings.length) { %>
             <div class='container p-4 mt-4 px-5 text-center bg-light'>
 
                 <h2 class='fw-light overall'>Overall Performance</h2>
                 <div class='row'>
-                    <div class="col-2 row row-cols-1 align-items-center">
+                    <div class="col-4 col-md-2 row row-cols-1 align-items-center">
                         <div class="col">
                             <h3 class='fw-lighter'>Return</h3>
                         </div>
@@ -21,29 +19,31 @@
                     <div class="col-8">
                         <canvas id="myChart" width="876" height="219"></canvas>
                     </div>
-                    <div class="col-2 row row-cols-1 align-items-center">
-                        <div class="col">
-                            <h3 class='fw-lighter'>
-                                $<%- portfolio.totalValue[1]%>
-                            </h3>
-                        </div>
-                        <div class="col">
-                            <h3 class='fw-lighter'>
-                                $<%- portfolio.totalCost[1]%>
-                            </h3>
+                    <div class="col-md-2 d-none d-md-flex">
+                        <div class="row row-cols-1 align-items-center">
+                            <div class="col">
+                                <h3 class='fw-lighter'>
+                                    $<%= portfolio.totalValue[1]%>
+                                </h3>
+                            </div>
+                            <div class="col">
+                                <h3 class='fw-lighter'>
+                                    $<%= portfolio.totalCost[1]%>
+                                </h3>
+                            </div>
                         </div>
                     </div>
-                    <div>
-                        <h5 class='fw-light'>Current Yield</h5>
-                        <h3 class='fw-light <%=(portfolio.currentValue[0] < 0) ? ' text-danger' : 'text-success' %>'>$
-                            <%-portfolio.currentValue[1]%>, (<%-portfolio.currentPercent[1]%>%)
-                        </h3>
-                    </div>
+                </div>
+                <div class='mt-2'>
+                    <h5 class='fw-light'>Current Yield</h5>
+                    <h3 class='fw-light <%=(portfolio.currentValue[0] < 0) ? ' text-danger' : 'text-success' %>'>$
+                        <%=portfolio.currentValue[1]%>, (<%=portfolio.currentPercent[1]%>%)
+                    </h3>
                 </div>
 
 
             </div>
-            <div class='container border border-secondary mt-5'>
+            <div class='container table-responsive border border-secondary mt-5'>
                 <div class="row align-items-center">
                     <div class="col-1"></div>
                     <div class="col-10">
@@ -68,22 +68,22 @@
                     </thead>
                     <tbody>
                         <% for (let stock of portfolio.userHoldings) { %>
-                            <tr onclick="linkTo('<%-stock.ticker%>')">
+                            <tr onclick="linkTo('<%=stock.ticker%>')">
                                 <td scope="row">
-                                    <%- stock.ticker %>
+                                    <%= stock.ticker %>
                                 </td>
                                 <td>
-                                    <%- stock.quantity %>
+                                    <%= stock.quantity %>
                                 </td>
                                 <td>
-                                    $<%- stock.lastPrice[1] %>
+                                    $<%= stock.lastPrice[1] %>
 
                                 </td>
                                 <td>
-                                    $<%- stock.posValue[1] %>
+                                    $<%= stock.posValue[1] %>
                                 </td>
                                 <td class=<%=(stock.unrealisedValue[0] < 0) ? 'text-danger' : 'text-success' %>>
-                                    $<%- stock.unrealisedValue[1]%>, (<%- stock.unrealisedPercent[1]%>%)
+                                    $<%= stock.unrealisedValue[1]%>, (<%= stock.unrealisedPercent[1]%>%)
                                 </td>
                             </tr>
                             <% } %>
