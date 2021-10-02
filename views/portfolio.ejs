@@ -4,22 +4,21 @@
         <%- include('partials/alert') %>
             <% if (portfolio.userHoldings.length) { %>
                 <div class='container px-5 py-4 bg-light'>
-
                     <h2 class='fw-light'>Portfolio Overview</h2>
                     <div class='row mt-3'>
-                        <div class="col border border-dark p-1">
+                        <div class="col border border-dark p-2">
                             <h5>Total Value:
                             </h5>
                             <h3 class="fw-light">
                                 $<%=portfolio.totalValue[1]%>
                             </h3>
                         </div>
-                        <div class="col border border-dark p-1">
+                        <div class="col border border-dark p-2">
                             <h5>Total Cost:</h5>
                             <h3 class="fw-light">$<%=portfolio.totalCost[1]%>
                             </h3>
                         </div>
-                        <div class="col border border-dark p-1">
+                        <div class="col border border-dark p-2">
                             <h5>Current Yield:</h5>
                             <h3
                                 class="fw-light <%=(portfolio.currentValue[0] < 0) ? ' text-danger' : 'text-success' %>">

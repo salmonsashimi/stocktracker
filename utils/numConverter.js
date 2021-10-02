@@ -3,4 +3,3 @@ module.exports = (num) => {
     let str = num.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
     return [int, str];
 }
-

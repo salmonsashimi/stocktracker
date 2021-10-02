@@ -2,10 +2,8 @@
 
     <div class="container text-center px-md-5 my-5">
         <h1 class='fw-light'>Hello, <%= name %>.</h1>
-
         <% if (portfolio.userHoldings.length) { %>
             <div class='container p-4 mt-4 px-5 text-center bg-light'>
-
                 <h2 class='fw-light overall'>Overall Performance</h2>
                 <div class='row'>
                     <div class="col-4 col-md-2 row row-cols-1 align-items-center">
@@ -40,8 +38,6 @@
                         <%=portfolio.currentValue[1]%>, (<%=portfolio.currentPercent[1]%>%)
                     </h3>
                 </div>
-
-
             </div>
             <div class='container table-responsive border border-secondary mt-5'>
                 <div class="row align-items-center">
@@ -50,12 +46,10 @@
                         <h2 class='mt-3 fw-light'>Top Portfolio Positions</h2>
                     </div>
                     <div class="col-1">
-
                         <a class="btn btn-outline-dark border border-0" href='/portfolio'><i
                                 class="fas fa-external-link-alt"></i></a>
                     </div>
                 </div>
-
                 <table class="table table-hover table-striped">
                     <thead>
                         <tr>
@@ -77,7 +71,6 @@
                                 </td>
                                 <td>
                                     $<%= stock.lastPrice[1] %>
-
                                 </td>
                                 <td>
                                     $<%= stock.posValue[1] %>
@@ -87,8 +80,6 @@
                                 </td>
                             </tr>
                             <% } %>
-
-
                     </tbody>
                 </table>
             </div>
@@ -104,14 +95,10 @@
                     <a class="btn btn-outline-dark" href='/buy'>Add a stock</a>
                 </div>
                 <% } %>
-
-
     </div>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type='text/javascript' src="chart.js" cost='<%=portfolio.totalCost[0]%>'
         value='<%=portfolio.totalValue[0]%>' charset='utf-8'></script>
     <script type='text/javascript' src="table.js"></script>
-
 
     <%- include('partials/footer') %>

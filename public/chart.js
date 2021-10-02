@@ -17,7 +17,6 @@ const data = {
         ],
         borderWidth: 1,
         maxBarThickness: 100,
-
     }]
 };
 
@@ -38,12 +37,9 @@ const config = {
             y: {
                 display: false,
             }
-
         }
-
     },
 };
-
 
 var myChart = new Chart(
     document.getElementById('myChart'),

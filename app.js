@@ -2,17 +2,6 @@
 
 // **** USE gitignore to ignore the .env file. 
 // -	Can just google gitignore template from github and copy paste
-// -	Atom will show files greyed out ---- shows that the files will not be committed. 
-//delete styles.css if not in use 
-
-
-// **when deploying app on server, look for config vars and see how to set them up. 
-
-
-// add responsive table layouts, for the tbales to wider width when in smaller screen. 
-// consolidate all padding to first container div. 
-
-//remove all white space in all files
 
 const express = require('express');
 const app = express();
@@ -22,7 +11,6 @@ const bcrypt = require('bcrypt');
 const session = require('express-session');
 const mongoose = require('mongoose');
 const flash = require('connect-flash');
-const { listeners } = require('process');
 const User = require(__dirname + '/models/User');
 const Stock = require(__dirname + '/models/Stock');
 const Trade = require(__dirname + '/models/Trade');
@@ -56,8 +44,6 @@ mongoose.connect('mongodb://localhost:27017/stocktracker', {
     .then(() => console.log('mongo connection success'))
     .catch((e) => console.log('mongo connection error', e))
 
-
-//middleware 
 const requireLogin = (req, res, next) => {
     if (!req.session.user_id) {
         return res.redirect('/');
@@ -70,17 +56,12 @@ const getToday = () => {
     return date.toLocaleDateString('en-GB');
 }
 
-app.get('/test', (req, res) => {
-    res.render('test');
-})
-
 //****************************************
 //*           LOGIN/REGISTER PAGE        *
 //****************************************
 app.get('/', (req, res) => {
     res.render('login', { page: 'Login' });
 })
-
 
 app.post('/login', catchAsync(async (req, res) => {
     let userLogin = req.body;
@@ -121,7 +102,6 @@ app.post('/register', catchAsync(async (req, res) => {
     res.redirect('/home');
 }))
 
-
 //****************************************
 //*             HOME PAGE                *
 //****************************************
@@ -146,7 +126,6 @@ app.get('/home', requireLogin, catchAsync(async (req, res) => {
     }
     res.render('home', { page: 'Homepage', name, portfolio });
 }))
-
 
 //****************************************
 //*             PORTFOLIO PAGE           *
@@ -206,7 +185,6 @@ app.post('/buy', requireLogin, catchAsync(async (req, res) => {
     res.redirect('/portfolio');
 }))
 
-
 //****************************************
 //*             SELL PAGE                *
 //****************************************
@@ -241,7 +219,6 @@ app.post('/sell', requireLogin, catchAsync(async (req, res, next) => {
     }
 }))
 
-
 //****************************************
 //*     TICKER SEARCH PAGE               *
 //****************************************
@@ -275,7 +252,6 @@ app.get('/ticker/:ticker', requireLogin, catchAsync(async (req, res) => {
     }
     res.render('ticker', { page: `Ticker: ${ticker}`, companyInfo, userStock, userTrades })
 }))
-
 
 app.post('/ticker', requireLogin, catchAsync(async (req, res) => {
     let { ticker } = req.body;

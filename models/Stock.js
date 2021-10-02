@@ -4,8 +4,6 @@ const User = require('./User');
 const numConverter = require('../utils/numConverter');
 const obtainCompanyInfo = require('../utils/obtainCompanyInfo');
 
-
-
 const stockSchema = new Schema({
     ticker: {
         type: String,
@@ -47,7 +45,6 @@ stockSchema.statics.retrievePortfolio = async function (userId) {
         totalCost += parseFloat(holding.price) * holding.quantity;
         totalValue += parseFloat(holding.posValue[0]);
     }
-
     totalCost = numConverter(totalCost);
     totalValue = numConverter(totalValue);
     currentValue = numConverter(totalValue[0] - totalCost[0]);

@@ -11,24 +11,20 @@
     <link rel="stylesheet" type="text/css" href="/styles.css">
     <link rel="icon" href="/icon.ico">
     <title>
-        stocktracker: <%- page %>
+        stocktracker: <%= page %>
     </title>
-
 </head>
 
 <body>
     <% if (page!=='Login' ) { %>
         <nav class="navbar navbar-expand-sm navbar-light bg-dark sticky-top px-3 px-md-5">
             <div class="container-fluid mx-md-4 px-md-4">
-
-
                 <a class="navbar-brand fst-italic fw-bold fs-4 p-0 text-white" href="/home">stocktracker</a>
                 <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse"
                     data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
                     aria-expanded="false" aria-label="Toggle navigation">
                     <i class="fas fa-search text-white"></i> </button>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
-
                     <form action='/ticker' method='POST' class="d-flex ms-auto pe-3">
                         <div class="input-group">
                             <input class="form-control border border-light" type="search" placeholder="Search Ticker"
@@ -39,15 +35,13 @@
                         </div>
                     </form>
                 </div>
-
                 <ul class="d-flex mb-0 ps-0">
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle text-white" href="#" id="navbarDropdown" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-user"></i>
-
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <ul class="dropdown-menu dropdown-menu-end mt-2" aria-labelledby="navbarDropdown">
                             <li><a class="dropdown-item" href="/portfolio">Portfolio</a></li>
                             <li><a class="dropdown-item" href="/trades">Trade History</a></li>
                             <li>
@@ -57,7 +51,6 @@
                         </ul>
                     </li>
                 </ul>
-
             </div>
         </nav>
         <% } %>
