@@ -1,8 +1,3 @@
-// //REMEMBER 
-
-// **** USE gitignore to ignore the .env file. 
-// -	Can just google gitignore template from github and copy paste
-
 const express = require('express');
 const app = express();
 const path = require('path');
