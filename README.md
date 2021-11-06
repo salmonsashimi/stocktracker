@@ -1,5 +1,5 @@
 # stocktracker: Keep track of your stock portfolio
-
+![stocktracker](https://user-images.githubusercontent.com/77195746/140622471-c19f4eba-0ac4-4765-bbac-e394bf32ba4c.gif)
 
 ## About
 stocktracker is a web app for users to log and review their stock portfolio. The web app was built with Node.js and MongoDB.
@@ -28,4 +28,5 @@ The application utilises node.js and MongoDB, so its required they already come 
    ```
  6. Website is accessible on your local server at http://localhost:3000/
 
-## Usage
+## Contact
+Samuel Cheung - cheung.ycs@gmail.com
