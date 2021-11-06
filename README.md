@@ -23,5 +23,6 @@ The application utilises node.js and MongoDB, so its required they already come 
    ```
    node app.js
    ```
+ 6. Website is accessible on your local server at http://localhost:3000/
 
 ## Usage
