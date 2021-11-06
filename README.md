@@ -7,13 +7,17 @@ The application utilises node and MongoDB, so its required they already come pre
 
 ## Installation
 1. Clone the project
-`git clone https://github.com/salmonsashimi/stocktracker.git`
+```git clone https://github.com/salmonsashimi/stocktracker.git```
 2. Install NPM packages in the project directory.
 
-   `npm install`
+   ```
+   npm install
+   ```
 3. Create .env file 
 4. Go to marketstack to obtain free API key, and add it into .env file.
-   `API_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`
+   ```
+   API_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+   ```
 5. Start applicaton
    `node app.js`
 
