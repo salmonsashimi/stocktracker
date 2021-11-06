@@ -1,4 +1,7 @@
-# stocktracker
+# stocktracker: Keep track of your stock portfolio
+
+
+## About
 stocktracker is a web app for users to log and review their stock portfolio. The web app was built with Node.js and MongoDB.
 
 ## Prerequisites
